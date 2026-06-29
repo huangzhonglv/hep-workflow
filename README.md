@@ -45,6 +45,11 @@ python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements-dev.txt
 ```
 
+Optional Wolfram dependency: the default validators and test suite do not
+require Wolfram. To execute Package-X calculations or run the gated end-to-end
+tests, install Mathematica or Wolfram Engine, make sure the `wolframscript`
+command works in your terminal, and ensure Package-X can be loaded by Wolfram.
+
 ### 2. Run the validators
 
 ```bash
