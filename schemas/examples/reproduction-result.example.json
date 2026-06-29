@@ -1,0 +1,123 @@
+{
+  "repro_id": "run-001",
+  "paper_id": "arxiv:2601.01234v2",
+  "started_at": "2026-05-09T10:00:00Z",
+  "finished_at": "2026-05-09T10:01:23Z",
+  "depends_on": {
+    "model": {
+      "version": "v1",
+      "checksum": "sha256:c1f3ba396d020c60408998c90681fec754b76a36ba763088dd3285e58334fdd1"
+    },
+    "calculations": {
+      "tasks": [
+        "task-001",
+        "task-002"
+      ],
+      "model_version": "v1"
+    },
+    "numerics": {
+      "analysis_id": "analysis-001",
+      "scan_meta_checksum": "sha256:e63c3dfb6b7e8f01a5db741d2f9f673a5fda6edfd5709dbcb6f915fd083a0001"
+    },
+    "literature": {
+      "repro_targets_checksum": "sha256:615b790d416e93b204745c36f69ee0cfe652a8164d31d64c7710ec6211230001",
+      "digitized_files_checksums": {
+        "literature/digitized/fig-3a.csv": "sha256:69cfe56e95c17684ce88fa967be5e7033c64dd3e515bc843b9a5cf50dd270001",
+        "literature/digitized/fig-5.csv": "sha256:0b0b6f7270fb5c21534f3b1fa53745ec2e9b17fb5eeab698724c3f75ee510001"
+      }
+    }
+  },
+  "run_summary": {
+    "derivation_independence_aggregate": "independent_manual",
+    "n_targets_total": 2,
+    "n_targets_pass": 1,
+    "n_targets_fail": 0,
+    "n_targets_needs_human_review": 1,
+    "n_targets_blocked": 0
+  },
+  "results": [
+    {
+      "target_id": "fig-3a",
+      "tasks_used": [
+        "task-001"
+      ],
+      "derivation_independence": "independent",
+      "provenance_issues": [],
+      "comparison": {
+        "kind": "figure_curve",
+        "interpolation_method": "linear",
+        "metrics": {
+          "max_relative_error": 0.04,
+          "rms_relative_error": 0.02,
+          "n_points_compared": 48
+        }
+      },
+      "tolerance": {
+        "kind": "relative",
+        "value": 0.15
+      },
+      "verdict": "pass",
+      "verdict_ceiling": "pass",
+      "generated_files": {
+        "overlay": {
+          "pdf": "reproduction/figures/run-001/fig-3a-overlay.pdf",
+          "png": "reproduction/figures/run-001/fig-3a-overlay.png"
+        },
+        "side_by_side": {
+          "pdf": "reproduction/figures/run-001/fig-3a-side-by-side.pdf",
+          "png": "reproduction/figures/run-001/fig-3a-side-by-side.png"
+        },
+        "residual": {
+          "pdf": "reproduction/figures/run-001/fig-3a-residual.pdf",
+          "png": "reproduction/figures/run-001/fig-3a-residual.png"
+        }
+      },
+      "warnings": [],
+      "notes": ""
+    },
+    {
+      "target_id": "fig-5",
+      "tasks_used": [
+        "task-002"
+      ],
+      "derivation_independence": "independent_manual",
+      "provenance_issues": [
+        {
+          "task_id": "task-002",
+          "state": "manual",
+          "reason": "manual_tree_algebra_on_tree_task"
+        }
+      ],
+      "comparison": {
+        "kind": "exclusion_region",
+        "metrics": {
+          "boundary_points_compared": 31
+        }
+      },
+      "tolerance": {
+        "kind": "qualitative",
+        "value": "region_topology"
+      },
+      "verdict": "needs_human_review",
+      "verdict_ceiling": "needs_human_review",
+      "generated_files": {
+        "overlay": {
+          "pdf": "reproduction/figures/run-001/fig-5-overlay.pdf",
+          "png": "reproduction/figures/run-001/fig-5-overlay.png"
+        },
+        "side_by_side": {
+          "pdf": "reproduction/figures/run-001/fig-5-side-by-side.pdf",
+          "png": "reproduction/figures/run-001/fig-5-side-by-side.png"
+        },
+        "residual": {
+          "pdf": "reproduction/figures/run-001/fig-5-residual.pdf",
+          "png": "reproduction/figures/run-001/fig-5-residual.png"
+        }
+      },
+      "warnings": [],
+      "notes": "Tree-level manual algebra requires human review before accepting the comparison."
+    }
+  ],
+  "diagnostic_file": "reproduction/runs/run-001/diagnostic.md",
+  "notes": ""
+}

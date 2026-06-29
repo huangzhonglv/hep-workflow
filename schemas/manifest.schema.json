@@ -1,0 +1,588 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HEP Workflow Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "project_name",
+    "created",
+    "last_updated",
+    "active_model_version",
+    "artifacts",
+    "history"
+  ],
+  "properties": {
+    "project_name": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "created": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "last_updated": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "active_model_version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "artifacts": {
+      "$ref": "#/$defs/artifacts"
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/history_entry"
+      }
+    }
+  },
+  "$defs": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "partial",
+        "done",
+        "blocked",
+        "failed",
+        "skipped"
+      ]
+    },
+    "timestamp": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^(\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z)?$"
+    },
+    "checksum": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^(sha256:.+)?$"
+    },
+    "history_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "action",
+        "timestamp",
+        "by"
+      ],
+      "properties": {
+        "action": {
+          "type": "string",
+          "anyOf": [
+            {
+              "enum": [
+                "idea_complete",
+                "model_updated",
+                "constraints_complete",
+                "constraints_updated",
+                "benchmarks_updated",
+                "literature_complete",
+                "literature_updated",
+                "reproduction_run_complete",
+                "reproduction_run_failed",
+                "numerics_analysis_complete",
+                "numerics_analysis_rerun",
+                "numerics_figures_regenerated",
+                "calculations_updated"
+              ]
+            },
+            {
+              "pattern": "^model_complete_v\\d+$"
+            },
+            {
+              "pattern": "^calc_task_task-\\d{3}_(complete|revised)$"
+            }
+          ]
+        },
+        "analysis_id": {
+          "type": "string",
+          "pattern": "^analysis-\\d{3}$"
+        },
+        "repro_id": {
+          "type": "string",
+          "pattern": "^run-\\d{3}$"
+        },
+        "timestamp": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+        },
+        "by": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "const": "calculations_updated"
+              }
+            },
+            "required": [
+              "action"
+            ]
+          },
+          "then": {
+            "required": [
+              "note"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "action": {
+                "pattern": "^reproduction_run_(complete|failed)$"
+              }
+            },
+            "required": [
+              "action"
+            ]
+          },
+          "then": {
+            "required": [
+              "repro_id"
+            ]
+          },
+          "else": {
+            "not": {
+              "required": [
+                "repro_id"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "idea_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "files",
+        "produced_by",
+        "timestamp"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "produced_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "timestamp": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "model_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "version",
+        "files",
+        "checksum",
+        "produced_by",
+        "timestamp"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "checksum": {
+          "$ref": "#/$defs/checksum"
+        },
+        "produced_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "timestamp": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "model_dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "checksum"
+      ],
+      "properties": {
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "checksum": {
+          "$ref": "#/$defs/checksum"
+        }
+      }
+    },
+    "calculations_dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tasks",
+        "model_version"
+      ],
+      "properties": {
+        "tasks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^task-\\d{3}$"
+          }
+        },
+        "model_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "constraints_dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "checksum"
+      ],
+      "properties": {
+        "checksum": {
+          "$ref": "#/$defs/checksum"
+        }
+      }
+    },
+    "calculations_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "completed_tasks",
+        "pending_tasks",
+        "depends_on",
+        "produced_by",
+        "timestamp"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "completed_tasks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^task-\\d{3}$"
+          }
+        },
+        "pending_tasks": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^task-\\d{3}$"
+          }
+        },
+        "depends_on": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "model"
+          ],
+          "properties": {
+            "model": {
+              "$ref": "#/$defs/model_dependency"
+            }
+          }
+        },
+        "produced_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "timestamp": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "constraints_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "files",
+        "depends_on",
+        "produced_by",
+        "timestamp"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "depends_on": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "model"
+          ],
+          "properties": {
+            "model": {
+              "$ref": "#/$defs/model_dependency"
+            }
+          }
+        },
+        "produced_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "timestamp": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "numerics_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "files",
+        "depends_on",
+        "analyses",
+        "produced_by",
+        "timestamp"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "depends_on": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "model",
+            "calculations",
+            "constraints"
+          ],
+          "properties": {
+            "model": {
+              "$ref": "#/$defs/model_dependency"
+            },
+            "calculations": {
+              "$ref": "#/$defs/calculations_dependency"
+            },
+            "constraints": {
+              "$ref": "#/$defs/constraints_dependency"
+            }
+          }
+        },
+        "analyses": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^analysis-\\d{3}$"
+          }
+        },
+        "produced_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "timestamp": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "literature_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "files",
+        "produced_by",
+        "timestamp"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "produced_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "timestamp": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "reproduction_artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "runs",
+        "depends_on",
+        "produced_by",
+        "timestamp"
+      ],
+      "properties": {
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "runs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^run-\\d{3}$"
+          }
+        },
+        "depends_on": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "model",
+            "literature",
+            "numerics"
+          ],
+          "properties": {
+            "model": {
+              "$ref": "#/$defs/model_dependency"
+            },
+            "literature": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "checksum"
+              ],
+              "properties": {
+                "checksum": {
+                  "$ref": "#/$defs/checksum"
+                }
+              }
+            },
+            "numerics": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "analyses"
+              ],
+              "properties": {
+                "analyses": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^analysis-\\d{3}$"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "produced_by": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "timestamp": {
+          "$ref": "#/$defs/timestamp"
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "idea",
+        "model",
+        "calculations",
+        "constraints",
+        "numerics"
+      ],
+      "properties": {
+        "idea": {
+          "$ref": "#/$defs/idea_artifact"
+        },
+        "model": {
+          "$ref": "#/$defs/model_artifact"
+        },
+        "calculations": {
+          "$ref": "#/$defs/calculations_artifact"
+        },
+        "constraints": {
+          "$ref": "#/$defs/constraints_artifact"
+        },
+        "numerics": {
+          "$ref": "#/$defs/numerics_artifact"
+        },
+        "literature": {
+          "$ref": "#/$defs/literature_artifact"
+        },
+        "reproduction": {
+          "$ref": "#/$defs/reproduction_artifact"
+        }
+      }
+    }
+  }
+}

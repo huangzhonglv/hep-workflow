@@ -1,0 +1,43 @@
+{
+  "model_name": "Toy Numerics Contract Model",
+  "model_version": "v1",
+  "tasks": [
+    {
+      "task_id": "task-001",
+      "title": "Synthetic loop observable backend",
+      "type": "loop",
+      "loop_order": 1,
+      "process": "toy_lepton -> toy_lepton gamma",
+      "description": "Provides a small Python backend for numerics tests.",
+      "lagrangian_terms": [
+        "g_t S l l"
+      ],
+      "external_particles": {
+        "incoming": [
+          {
+            "particle": "toy_lepton",
+            "momentum": "p"
+          }
+        ],
+        "outgoing": [
+          {
+            "particle": "toy_lepton",
+            "momentum": "p_out"
+          }
+        ]
+      },
+      "loop_particles": [
+        {
+          "propagator": "toy_scalar",
+          "mass": "M_Hpp"
+        }
+      ],
+      "target_quantity": "Br_mu_to_egamma",
+      "on_shell": true,
+      "kinematics": "Synthetic low-energy point.",
+      "output_formula": "Br_mu_to_egamma = 1e-13 * (100 / M_Hpp)^2 * (1 + 100 v_Delta)",
+      "priority": "high",
+      "notes": "Synthetic task; no physics claim."
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "model_name": "Smoke E2E Toy Scalar",
+  "model_version": "v1",
+  "parameters": [
+    "M_Hpp",
+    "v_Delta"
+  ],
+  "constraints": [
+    {
+      "id": "c-001",
+      "name": "Toy BR_toy upper limit",
+      "type": "upper_limit",
+      "observable": "BR_toy",
+      "limit_value": 1.0e-10,
+      "confidence_level": 0.95,
+      "unit": "dimensionless",
+      "source": "Synthetic smoke-e2e fixture",
+      "implementation_status": "direct",
+      "notes": "Direct upper limit used by the E2E smoke fixture.",
+      "computed_by": {
+        "type": "task",
+        "task_id": "task-001"
+      }
+    }
+  ]
+}

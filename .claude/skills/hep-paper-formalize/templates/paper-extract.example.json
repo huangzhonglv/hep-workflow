@@ -1,0 +1,251 @@
+{
+  "paper_id": "arxiv:2601.01234v2",
+  "source": {
+    "kind": "arxiv",
+    "identifier": "2601.01234v2",
+    "version_used": "v2"
+  },
+  "fields": [
+    {
+      "paper_name": "Zprime",
+      "canonical_name": "Zp",
+      "latex": "Z'_\\mu",
+      "spin_or_type": "massive vector",
+      "role": "new gauge boson",
+      "quantum_numbers": {
+        "SU3": 1,
+        "SU2": 1,
+        "U1Y": 0,
+        "U1prime": 1
+      },
+      "mass_parameter": "M_Zp",
+      "source_anchor": "Sec. 2, Eq. (1)"
+    },
+    {
+      "paper_name": "S",
+      "canonical_name": "S",
+      "latex": "S",
+      "spin_or_type": "real scalar",
+      "role": "symmetry-breaking spectator",
+      "quantum_numbers": {
+        "SU3": 1,
+        "SU2": 1,
+        "U1Y": 0,
+        "U1prime": 1
+      },
+      "mass_parameter": "M_S",
+      "source_anchor": "Sec. 2, paragraph 2"
+    }
+  ],
+  "parameters": [
+    {
+      "paper_name": "mZp",
+      "canonical_name": "M_Zp",
+      "latex": "M_{Z'}",
+      "unit": "GeV",
+      "role": "scan",
+      "suggested_range": [
+        0.01,
+        100.0
+      ],
+      "source_anchor": "Fig. 3 caption"
+    },
+    {
+      "paper_name": "gprime",
+      "canonical_name": "g_prime",
+      "latex": "g'",
+      "unit": "dimensionless",
+      "role": "scan",
+      "suggested_range": [
+        0.0001,
+        0.1
+      ],
+      "source_anchor": "Fig. 3 axes"
+    },
+    {
+      "paper_name": "mmu",
+      "canonical_name": "m_mu",
+      "latex": "m_\\mu",
+      "unit": "GeV",
+      "role": "fixed",
+      "value": 0.10566,
+      "source_anchor": "Sec. 3 below Eq. (7)"
+    }
+  ],
+  "interactions": [
+    {
+      "label": "muon-vector-current",
+      "latex": "-g' Z'_\\mu \\bar{\\mu}\\gamma^\\mu\\mu",
+      "particles": [
+        "Zp",
+        "mu",
+        "mu_bar"
+      ],
+      "couplings": [
+        "g_prime"
+      ],
+      "source_anchor": "Eq. (2)"
+    },
+    {
+      "label": "tau-vector-current",
+      "latex": "+g' Z'_\\mu \\bar{\\tau}\\gamma^\\mu\\tau",
+      "particles": [
+        "Zp",
+        "tau",
+        "tau_bar"
+      ],
+      "couplings": [
+        "g_prime"
+      ],
+      "source_anchor": "Eq. (2)"
+    }
+  ],
+  "constraints_in_paper": [
+    {
+      "label": "Muon g-2 preferred band",
+      "source_anchor": "Fig. 3 green band",
+      "quantity": "delta_a_mu",
+      "value": "2.5e-9 +/- 0.6e-9",
+      "notes": "Paper uses the 2024 combined value."
+    },
+    {
+      "label": "Trident bound",
+      "source_anchor": "Fig. 3 gray region",
+      "quantity": "sigma_nuN_to_nuN_mumu",
+      "value": "digitized boundary",
+      "notes": "Boundary must be digitized before comparison."
+    }
+  ],
+  "observables": [
+    {
+      "name": "delta_a_mu",
+      "latex": "\\Delta a_\\mu",
+      "description": "One-loop Z' contribution to the muon anomalous magnetic moment.",
+      "source_anchor": "Eq. (7)",
+      "formula_labels": [
+        "delta-amu-heavy-limit"
+      ],
+      "target_ids": [
+        "fig-3a",
+        "bench-1"
+      ]
+    },
+    {
+      "name": "Br_tau_to_mumu_mu",
+      "latex": "\\mathrm{Br}(\\tau\\to 3\\mu)",
+      "description": "Tree-level rare tau decay induced by the leptophilic vector portal.",
+      "source_anchor": "Sec. 4, Eq. (11)",
+      "formula_labels": [
+        "tau-to-3mu-rate"
+      ],
+      "target_ids": [
+        "fig-5"
+      ]
+    }
+  ],
+  "formulas": [
+    {
+      "label": "delta-amu-heavy-limit",
+      "latex": "\\Delta a_\\mu \\simeq \\frac{g'^2}{12\\pi^2}\\frac{m_\\mu^2}{M_{Z'}^2}",
+      "source_anchor": "Eq. (8)",
+      "human_review_required": true,
+      "allowed_uses": [
+        "model/benchmarks.json.formula_latex",
+        "reproduction report side-by-side display"
+      ],
+      "forbidden_uses": [
+        "result-python.py",
+        "result.wl",
+        "calculation backend"
+      ]
+    },
+    {
+      "label": "tau-to-3mu-rate",
+      "latex": "\\Gamma(\\tau\\to 3\\mu) \\propto \\frac{g'^4 m_\\tau^5}{M_{Z'}^4}",
+      "source_anchor": "Eq. (11)",
+      "human_review_required": true,
+      "allowed_uses": [
+        "model/benchmarks.json.formula_latex"
+      ],
+      "forbidden_uses": [
+        "result-python.py",
+        "result.wl",
+        "calculation backend"
+      ]
+    }
+  ],
+  "scan_config_hints": [
+    {
+      "target_id": "fig-3a",
+      "scan_parameters": [
+        {
+          "canonical_name": "M_Zp",
+          "range": [
+            0.01,
+            100.0
+          ],
+          "scale": "log"
+        },
+        {
+          "canonical_name": "g_prime",
+          "range": [
+            0.0001,
+            0.1
+          ],
+          "scale": "log"
+        }
+      ],
+      "fixed_parameters": {
+        "m_mu": 0.10566
+      },
+      "constraints_used": [
+        "Muon g-2 preferred band",
+        "Trident bound"
+      ],
+      "grid": {
+        "M_Zp": 120,
+        "g_prime": 120
+      },
+      "missing_fields": [],
+      "source_anchor": "Fig. 3 caption and axes"
+    },
+    {
+      "target_id": "fig-5",
+      "scan_parameters": [
+        {
+          "canonical_name": "M_Zp",
+          "range": [
+            0.01,
+            100.0
+          ],
+          "scale": "log"
+        }
+      ],
+      "fixed_parameters": {
+        "m_mu": 0.10566
+      },
+      "constraints_used": [
+        "BaBar four-muon search"
+      ],
+      "grid": {
+        "M_Zp": 100
+      },
+      "missing_fields": [
+        "y_param scan range for g_prime",
+        "exact confidence-level prescription for the boundary"
+      ],
+      "source_anchor": "Fig. 5 caption"
+    }
+  ],
+  "unit_conversion_notes": [
+    {
+      "quantity": "M_Zp",
+      "paper_unit": "MeV",
+      "workspace_unit": "GeV",
+      "conversion": "M_Zp_GeV = M_Zp_MeV / 1000",
+      "source_anchor": "Fig. 3 x-axis"
+    }
+  ],
+  "paper_local_to_canonical": {},
+  "notes": "Example only. Formula excerpts are benchmark/display references, not calculation backends."
+}

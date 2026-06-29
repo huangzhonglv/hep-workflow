@@ -1,0 +1,11 @@
+{
+  "model_name": "Toy Numerics Contract Model",
+  "benchmarks": [
+    {
+      "task_id": "task-001",
+      "observable": "Br_mu_to_egamma",
+      "has_benchmark": false,
+      "notes": "Synthetic fixture backend; no benchmark is claimed."
+    }
+  ]
+}

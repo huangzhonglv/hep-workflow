@@ -1,0 +1,55 @@
+{
+  "model_name": "Smoke E2E Toy Scalar",
+  "version": "v1",
+  "gauge_symmetry": "toy scalar sector",
+  "tags": [
+    "smoke-e2e",
+    "toy-model"
+  ],
+  "fields": [
+    {
+      "name": "Hpp",
+      "latex": "H^{++}",
+      "spin": 0,
+      "quantum_numbers": {
+        "toy_charge": 2
+      },
+      "mass_parameter": "M_Hpp",
+      "is_new": true,
+      "propagator_note": "Toy scalar propagator with mass M_Hpp."
+    }
+  ],
+  "parameters": [
+    {
+      "name": "M_Hpp",
+      "latex": "M_{H^{++}}",
+      "type": "mass",
+      "description": "Toy doubly charged scalar mass.",
+      "unit": "GeV",
+      "suggested_range": [
+        100,
+        1000
+      ],
+      "role": "scan"
+    },
+    {
+      "name": "v_Delta",
+      "latex": "v_\\Delta",
+      "type": "vev",
+      "description": "Toy scalar vev controlling BR_toy.",
+      "unit": "GeV",
+      "suggested_range": [
+        0.001,
+        1
+      ],
+      "role": "scan"
+    }
+  ],
+  "interactions": [],
+  "conventions": {
+    "gauge": "unitary",
+    "momentum_flow": "all incoming",
+    "gamma5_scheme": "not applicable",
+    "metric_signature": "+---"
+  }
+}

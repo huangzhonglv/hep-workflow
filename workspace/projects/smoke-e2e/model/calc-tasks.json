@@ -1,0 +1,37 @@
+{
+  "model_name": "Smoke E2E Toy Scalar",
+  "model_version": "v1",
+  "tasks": [
+    {
+      "task_id": "task-001",
+      "title": "Closed-form BR_toy observable",
+      "type": "tree",
+      "loop_order": 0,
+      "process": "toy scalar observable evaluation",
+      "description": "Evaluate the deterministic BR_toy formula for E2E smoke testing.",
+      "lagrangian_terms": [
+        "Toy closed-form definition of BR_toy."
+      ],
+      "external_particles": {
+        "incoming": [
+          {
+            "particle": "toy",
+            "momentum": "p1"
+          }
+        ],
+        "outgoing": [
+          {
+            "particle": "toy",
+            "momentum": "p2"
+          }
+        ]
+      },
+      "target_quantity": "BR_toy",
+      "on_shell": true,
+      "kinematics": "No physical phase space; direct scalar function evaluation.",
+      "output_formula": "BR_toy = 1.0e-4 * (v_Delta / M_Hpp)^2",
+      "priority": "low",
+      "notes": "Tree-level toy task used only as a deterministic validator fixture."
+    }
+  ]
+}

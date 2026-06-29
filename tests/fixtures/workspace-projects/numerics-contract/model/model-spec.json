@@ -1,0 +1,88 @@
+{
+  "model_name": "Toy Numerics Contract Model",
+  "version": "v1",
+  "gauge_symmetry": "U(1)_toy",
+  "tags": [
+    "synthetic",
+    "test-fixture"
+  ],
+  "fields": [
+    {
+      "name": "toy_scalar",
+      "latex": "S",
+      "spin": 0,
+      "quantum_numbers": {
+        "U1_toy": 1
+      },
+      "mass_parameter": "M_Hpp",
+      "is_new": true,
+      "propagator_note": "Synthetic scalar used only for numerics contract tests."
+    },
+    {
+      "name": "toy_lepton",
+      "latex": "l",
+      "spin": 0.5,
+      "quantum_numbers": {
+        "U1_toy": 0
+      },
+      "mass_parameter": null,
+      "is_new": false,
+      "propagator_note": "Massless external test field."
+    }
+  ],
+  "parameters": [
+    {
+      "name": "M_Hpp",
+      "latex": "M_S",
+      "type": "mass",
+      "description": "Synthetic scalar mass used in scans.",
+      "unit": "GeV",
+      "suggested_range": [
+        100.0,
+        500.0
+      ],
+      "role": "scan"
+    },
+    {
+      "name": "v_Delta",
+      "latex": "v_t",
+      "type": "coupling",
+      "description": "Synthetic coupling-like parameter used as either a fixed value or scan axis in tests.",
+      "unit": "GeV",
+      "suggested_range": [
+        0.0001,
+        0.001
+      ],
+      "role": "scan"
+    },
+    {
+      "name": "m_lightest",
+      "latex": "m_0",
+      "type": "mass",
+      "description": "Synthetic parameter for parameter-combination fallback tests.",
+      "unit": "eV",
+      "value": 0.01,
+      "role": "fixed"
+    }
+  ],
+  "interactions": [
+    {
+      "id": "int-001",
+      "latex": "g_t S l l",
+      "particles": [
+        "toy_scalar",
+        "toy_lepton"
+      ],
+      "lorentz_structure": "scalar",
+      "chirality": "none",
+      "coupling": "v_Delta",
+      "feynman_rule_note": "Synthetic interaction for contract tests only."
+    }
+  ],
+  "conventions": {
+    "gauge": "toy",
+    "momentum_flow": "all incoming",
+    "gamma5_scheme": "not used",
+    "metric_signature": "+---"
+  }
+}

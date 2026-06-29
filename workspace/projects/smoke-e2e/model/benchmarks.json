@@ -1,0 +1,27 @@
+{
+  "model_name": "Smoke E2E Toy Scalar",
+  "benchmarks": [
+    {
+      "task_id": "task-001",
+      "observable": "BR_toy",
+      "has_benchmark": true,
+      "notes": "Closed-form toy observable for E2E smoke test.",
+      "formula_latex": "1.0 \\times 10^{-4} \\, (v_\\Delta / M_{H^{++}})^2",
+      "formula_description": "BR_toy = 1e-4 * (v_Delta/M_Hpp)^2",
+      "known_limits": [],
+      "sources": [
+        "Closed form from BR_toy definition"
+      ],
+      "source_type": "training_knowledge",
+      "numerical_test_point": {
+        "inputs": {
+          "M_Hpp": 500.0,
+          "v_Delta": 0.1
+        },
+        "expected_value": 4.0e-12,
+        "tolerance": 1.0e-15,
+        "source": "Closed form from BR_toy definition"
+      }
+    }
+  ]
+}

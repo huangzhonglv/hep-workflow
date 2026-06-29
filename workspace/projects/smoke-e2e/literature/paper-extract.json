@@ -1,0 +1,169 @@
+{
+  "paper_id": "arxiv:2605.00001v1",
+  "source": {
+    "kind": "arxiv",
+    "identifier": "2605.00001v1",
+    "version_used": "v1"
+  },
+  "fields": [
+    {
+      "paper_name": "Hpp",
+      "canonical_name": "Hpp",
+      "latex": "H^{++}",
+      "spin_or_type": "complex scalar",
+      "role": "toy doubly charged scalar",
+      "quantum_numbers": {
+        "toy_charge": 2
+      },
+      "mass_parameter": "M_Hpp",
+      "source_anchor": "Sec. 2"
+    }
+  ],
+  "parameters": [
+    {
+      "paper_name": "mHpp",
+      "canonical_name": "M_Hpp",
+      "latex": "M_{H^{++}}",
+      "unit": "GeV",
+      "role": "scan",
+      "suggested_range": [
+        100.0,
+        1000.0
+      ],
+      "source_anchor": "Fig. 1 caption"
+    },
+    {
+      "paper_name": "vD",
+      "canonical_name": "v_Delta",
+      "latex": "v_\\Delta",
+      "unit": "GeV",
+      "role": "fixed",
+      "value": 0.001,
+      "source_anchor": "Fig. 1 caption"
+    }
+  ],
+  "interactions": [
+    {
+      "label": "toy-scalar-rate",
+      "latex": "BR_{toy}=10^{-4}(v_\\Delta/M_{H^{++}})^2",
+      "particles": [
+        "Hpp"
+      ],
+      "couplings": [
+        "v_Delta"
+      ],
+      "source_anchor": "Eq. (3)"
+    }
+  ],
+  "constraints_in_paper": [
+    {
+      "label": "Toy BR upper limit",
+      "source_anchor": "Fig. 1 gray band",
+      "quantity": "BR_toy",
+      "value": "1e-10",
+      "notes": "Synthetic paper-local label mapped to c-001 in the workspace."
+    }
+  ],
+  "observables": [
+    {
+      "name": "BR_toy",
+      "latex": "BR_{toy}",
+      "description": "Toy branching-ratio-like observable used by smoke-e2e.",
+      "source_anchor": "Eq. (3)",
+      "formula_labels": [
+        "toy-rate"
+      ],
+      "target_ids": [
+        "target-001",
+        "target-002"
+      ]
+    }
+  ],
+  "formulas": [
+    {
+      "label": "toy-rate",
+      "latex": "BR_{toy}=10^{-4}(v_\\Delta/M_{H^{++}})^2",
+      "source_anchor": "Eq. (3)",
+      "human_review_required": true,
+      "allowed_uses": [
+        "model/benchmarks.json.formula_latex",
+        "reproduction report side-by-side display"
+      ],
+      "forbidden_uses": [
+        "result-python.py",
+        "result.wl",
+        "calculation backend"
+      ]
+    }
+  ],
+  "scan_config_hints": [
+    {
+      "target_id": "target-001",
+      "scan_parameters": [
+        {
+          "canonical_name": "M_Hpp",
+          "range": [
+            100.0,
+            1000.0
+          ],
+          "scale": "linear"
+        }
+      ],
+      "fixed_parameters": {
+        "v_Delta": 0.001
+      },
+      "constraints_used": [
+        "Toy BR upper limit"
+      ],
+      "grid": {
+        "M_Hpp": 10
+      },
+      "missing_fields": [],
+      "source_anchor": "Fig. 1 caption and axis labels"
+    },
+    {
+      "target_id": "target-002",
+      "scan_parameters": [
+        {
+          "canonical_name": "M_Hpp",
+          "range": [
+            100.0,
+            1000.0
+          ],
+          "scale": "linear"
+        }
+      ],
+      "fixed_parameters": {},
+      "constraints_used": [
+        "Toy BR upper limit"
+      ],
+      "grid": {
+        "M_Hpp": 1
+      },
+      "missing_fields": [
+        "v_Delta_value"
+      ],
+      "source_anchor": "Table 1 omits the fixed v_Delta value"
+    }
+  ],
+  "unit_conversion_notes": [
+    {
+      "quantity": "M_Hpp",
+      "paper_unit": "GeV",
+      "workspace_unit": "GeV",
+      "conversion": "identity",
+      "source_anchor": "Fig. 1 axis label"
+    },
+    {
+      "quantity": "BR_toy",
+      "paper_unit": "dimensionless",
+      "workspace_unit": "dimensionless",
+      "conversion": "identity",
+      "source_anchor": "Eq. (3)"
+    }
+  ],
+  "paper_local_to_canonical": {
+    "Toy BR upper limit": "c-001"
+  },
+  "notes": "Synthetic smoke-e2e extraction for PR-2 reproduction tests."
+}

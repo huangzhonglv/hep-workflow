@@ -1,0 +1,446 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HEP Reproduction Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "repro_id",
+    "paper_id",
+    "started_at",
+    "finished_at",
+    "depends_on",
+    "run_summary",
+    "results"
+  ],
+  "properties": {
+    "repro_id": {
+      "type": "string",
+      "pattern": "^run-\\d{3}$"
+    },
+    "paper_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "started_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "finished_at": {
+      "$ref": "#/$defs/timestamp"
+    },
+    "depends_on": {
+      "$ref": "#/$defs/depends_on"
+    },
+    "run_summary": {
+      "$ref": "#/$defs/run_summary"
+    },
+    "results": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/target_result"
+      }
+    },
+    "diagnostic_file": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "timestamp": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "checksum": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^(sha256:.+)?$"
+    },
+    "target_id": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^task-\\d{3}$"
+    },
+    "target_kind": {
+      "type": "string",
+      "enum": [
+        "formula",
+        "benchmark_point",
+        "scan_table",
+        "figure_curve",
+        "exclusion_region"
+      ]
+    },
+    "independence": {
+      "type": "string",
+      "enum": [
+        "independent",
+        "independent_manual",
+        "tainted",
+        "unknown"
+      ]
+    },
+    "tolerance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "value"
+      ],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "relative",
+            "absolute",
+            "qualitative"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "file_pair": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "pdf",
+        "png"
+      ],
+      "properties": {
+        "pdf": {
+          "type": "string"
+        },
+        "png": {
+          "type": "string"
+        }
+      }
+    },
+    "generated_files": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "overlay",
+        "side_by_side",
+        "residual"
+      ],
+      "properties": {
+        "overlay": {
+          "$ref": "#/$defs/file_pair"
+        },
+        "side_by_side": {
+          "$ref": "#/$defs/file_pair"
+        },
+        "residual": {
+          "$ref": "#/$defs/file_pair"
+        }
+      }
+    },
+    "metric_value": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "metrics"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/target_kind"
+        },
+        "interpolation_method": {
+          "type": "string"
+        },
+        "metrics": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/metric_value"
+          }
+        }
+      }
+    },
+    "provenance_issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "state",
+        "reason"
+      ],
+      "properties": {
+        "task_id": {
+          "$ref": "#/$defs/task_id"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "manual",
+            "tainted",
+            "unknown"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "manual_tree_algebra_on_tree_task",
+            "literature_formula_imported",
+            "benchmark_used_as_input",
+            "unsupported_manual_loop",
+            "result_meta_missing",
+            "provenance_blocked"
+          ]
+        }
+      }
+    },
+    "target_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_id",
+        "tasks_used",
+        "derivation_independence",
+        "provenance_issues",
+        "comparison",
+        "tolerance",
+        "verdict",
+        "verdict_ceiling",
+        "generated_files",
+        "warnings",
+        "notes"
+      ],
+      "properties": {
+        "target_id": {
+          "$ref": "#/$defs/target_id"
+        },
+        "tasks_used": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/task_id"
+          }
+        },
+        "derivation_independence": {
+          "$ref": "#/$defs/independence"
+        },
+        "provenance_issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/provenance_issue"
+          }
+        },
+        "comparison": {
+          "$ref": "#/$defs/comparison"
+        },
+        "tolerance": {
+          "$ref": "#/$defs/tolerance"
+        },
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "fail",
+            "needs_human_review",
+            "blocked"
+          ]
+        },
+        "verdict_ceiling": {
+          "type": "string",
+          "enum": [
+            "pass",
+            "needs_human_review"
+          ]
+        },
+        "generated_files": {
+          "$ref": "#/$defs/generated_files"
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "model_dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "checksum"
+      ],
+      "properties": {
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "checksum": {
+          "$ref": "#/$defs/checksum"
+        }
+      }
+    },
+    "calculations_dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tasks",
+        "model_version"
+      ],
+      "properties": {
+        "tasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/task_id"
+          }
+        },
+        "model_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "numerics_dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysis_id",
+        "scan_meta_checksum"
+      ],
+      "properties": {
+        "analysis_id": {
+          "type": "string",
+          "pattern": "^analysis-\\d{3}$"
+        },
+        "scan_meta_checksum": {
+          "$ref": "#/$defs/checksum"
+        }
+      }
+    },
+    "literature_dependency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repro_targets_checksum",
+        "digitized_files_checksums"
+      ],
+      "properties": {
+        "repro_targets_checksum": {
+          "$ref": "#/$defs/checksum"
+        },
+        "digitized_files_checksums": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/checksum"
+          }
+        }
+      }
+    },
+    "depends_on": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model",
+        "calculations",
+        "numerics",
+        "literature"
+      ],
+      "properties": {
+        "model": {
+          "$ref": "#/$defs/model_dependency"
+        },
+        "calculations": {
+          "$ref": "#/$defs/calculations_dependency"
+        },
+        "numerics": {
+          "$ref": "#/$defs/numerics_dependency"
+        },
+        "literature": {
+          "$ref": "#/$defs/literature_dependency"
+        }
+      }
+    },
+    "run_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "derivation_independence_aggregate",
+        "n_targets_total",
+        "n_targets_pass",
+        "n_targets_fail",
+        "n_targets_needs_human_review",
+        "n_targets_blocked"
+      ],
+      "properties": {
+        "derivation_independence_aggregate": {
+          "$ref": "#/$defs/independence"
+        },
+        "n_targets_total": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "n_targets_pass": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "n_targets_fail": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "n_targets_needs_human_review": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "n_targets_blocked": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

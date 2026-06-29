@@ -1,0 +1,15 @@
+{
+  "arxiv": "arxiv:2601.01234v2",
+  "doi": "10.1234/example.hep.2026.001",
+  "title": "Leptophilic Vector Portals and Precision Muon Observables",
+  "authors": [
+    "Ari Chen",
+    "Bianca Novak",
+    "Samir Patel"
+  ],
+  "year": 2026,
+  "journal": "Journal of Fictitious Phenomenology",
+  "version_used": "v2",
+  "retrieved": "2026-05-09",
+  "hash": "sha256:4f4a7f1792a11e1c7b9831f6d57df77689f9e8f2b7327350b8e3a6b73a4f0001"
+}

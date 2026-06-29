@@ -1,0 +1,137 @@
+<!--
+fixed section order (do not reorder):
+1. Research Proposal title
+2. Physical Motivation
+3. Model Framework
+4. Key Observables and Calculations
+5. Experimental Constraints
+6. Expected Outcomes
+7. Methodology and Tools
+8. Risk Assessment
+9. Preliminary References
+
+optional sub-sections (may be added at the end):
+- Additional top-level sections or appendices may be added only after
+  Preliminary References.
+- If Preliminary References is omitted in a constrained draft, extensions may
+  be added only after Risk Assessment.
+- Sub-sections inside a fixed section may be added at the end of that parent
+  section without moving the fixed headings above.
+-->
+
+# Research Proposal: [Full Working Title]
+
+## Physical Motivation
+
+[2-3 paragraphs. What is the problem? Why is it interesting right now?
+Reference specific experimental results or theoretical puzzles.
+This section should convince a skeptical colleague that this is worth doing.]
+
+## Model Framework
+
+This section should be detailed enough that the downstream formalization step
+can write `model/model-spec.json` and `model/calc-tasks.json` without inventing
+missing physics assumptions.
+
+### Gauge Symmetry
+
+[State the full gauge symmetry precisely, for example:
+`SU(3)_c x SU(2)_L x U(1)_Y x U(1)_{L_mu-L_tau}`.
+If relevant, also state whether the low-energy theory is an effective theory,
+what symmetry-breaking pattern is assumed, and whether any mixing terms are neglected.]
+
+### Field Content
+
+[List the new fields explicitly. Include any SM fields that play a nontrivial
+role in the key interactions if that helps make the setup unambiguous.]
+
+| Field | Latex | Spin | SU(3)_c | SU(2)_L | U(1)_Y | New charge(s) | Mass parameter | Role |
+|-------|-------|------|---------|---------|--------|---------------|----------------|------|
+| [Zp] | [$Z'_\mu$] | [1] | [1] | [1] | [0] | [+1 under U(1)'] | [M_Zp] | [new mediator] |
+
+### Interaction Structure
+
+[Write the core interaction terms clearly enough that downstream model
+formalization can reconstruct the particle content and vertex structure
+without guessing.]
+
+- [Example: $\\mathcal{L}_{\\mathrm{int}} = - g' Z'_\\mu (\\bar\\mu \\gamma^\\mu \\mu - \\bar\\tau \\gamma^\\mu \\tau)$]
+- [List each additional essential interaction term as a separate bullet]
+
+### Free Parameters
+
+[List all free parameters that matter for phenomenology. Distinguish scan
+parameters, fixed inputs, and derived quantities.]
+
+| Parameter | Latex | Meaning | Type | Unit | Status (scan/fixed/derived) | Suggested range or value |
+|-----------|-------|---------|------|------|------------------------------|--------------------------|
+| [M_Zp] | [$M_{Z'}$] | [Z' mass] | [mass] | [GeV] | [scan] | [[10, 5000]] |
+| [g_prime] | [$g'$] | [new gauge coupling] | [coupling] | [dimensionless] | [scan] | [[1e-4, 1]] |
+
+### Conventions and Assumptions
+
+- Gauge choice: [e.g. Feynman gauge]
+- Momentum-flow convention: [e.g. all incoming at vertices]
+- gamma5 scheme: [e.g. naive dimensional gamma5]
+- Metric signature: [e.g. mostly minus]
+- Symmetry breaking / mixing assumptions: [state what is kept or neglected]
+- Additional simplifying assumptions: [massless limits, flavor alignment, etc.]
+
+### How The Model Addresses The Motivation
+
+[Explain in 1-2 focused paragraphs how the model addresses the problem from
+the Physical Motivation section, which interactions are responsible for the
+effect of interest, and why the chosen observables are the right probes.]
+
+## Key Observables and Calculations
+
+[For each observable:
+- What it is physically
+- How to compute it (which tool, at what order; in the current workflow the
+  core calculation should be at tree level or one loop)
+- What experimental data constrains it
+- What you expect to find (qualitative expectation)]
+
+## Experimental Constraints
+
+[List the relevant experimental bounds(if applicable):
+- Collider searches (LHC direct searches, precision measurements)
+- Flavor observables
+- Neutrino data
+- Electroweak precision tests
+- Dark matter bounds
+- Other (cosmological, astrophysical, beam dump, etc.)]
+
+## Expected Outcomes
+
+[What is the main result of this work? What is the "punchline"?
+What parameter space will be allowed/excluded?
+What predictions can be tested by upcoming experiments?]
+
+## Methodology and Tools
+
+[Which computational tools will be used:
+- Symbolic calculation: Package-X in this workflow is now limited to tree-level and one-loop calculations
+- Parameter scanning: Python, etc.]
+
+
+## Risk Assessment
+- Main technical risks:
+  - What could make the calculation / scan / reinterpretation difficult?
+  - Are special tools, recasts, Monte Carlo pipelines, or numerical integrations required?
+- Physics risks:
+  - Is the viable parameter space already heavily constrained?
+  - Is the likely signal too small or too standard to be interesting?
+- Null-result value:
+  - If the result is negative or constraints are strong, is there still a publishable conclusion?
+- Minimum publishable unit:
+  - What is the smallest self-contained result that would still make a viable short paper or letter?
+
+## Preliminary References
+
+[10-20 key references in BibTeX-compatible format:
+- The original model paper(s)
+- Key experimental results being used
+- Most relevant recent phenomenological studies]
+- Foundational / historically influential papers with high citation impact, when relevant
+Include historically influential references only when they genuinely anchor the proposal's conceptual lineage, not as generic citation padding.

@@ -1,0 +1,90 @@
+{
+  "model_name": "U(1)_{L_mu - L_tau}",
+  "version": "v1",
+  "gauge_symmetry": "SU(3)_c x SU(2)_L x U(1)_Y x U(1)_{L_mu - L_tau}",
+  "tags": ["zprime", "leptophilic", "U1_Lmu_Ltau", "muon_g2"],
+  "fields": [
+    {
+      "name": "Zp",
+      "latex": "Z'_\\mu",
+      "spin": 1,
+      "quantum_numbers": {
+        "SU3": 1,
+        "SU2": 1,
+        "U1Y": 0,
+        "U1prime": 1
+      },
+      "mass_parameter": "M_Zp",
+      "is_new": true,
+      "propagator_note": "massive vector, Feynman gauge: -g_{mu nu} / (k^2 - M_Zp^2)"
+    }
+  ],
+  "parameters": [
+    {
+      "name": "M_Zp",
+      "latex": "M_{Z'}",
+      "type": "mass",
+      "description": "Z' boson mass",
+      "unit": "GeV",
+      "suggested_range": [1, 5000],
+      "role": "scan"
+    },
+    {
+      "name": "g_prime",
+      "latex": "g'",
+      "type": "coupling",
+      "description": "U(1)' gauge coupling",
+      "unit": "dimensionless",
+      "suggested_range": [1e-4, 1],
+      "role": "scan"
+    },
+    {
+      "name": "m_mu",
+      "latex": "m_\\mu",
+      "type": "mass",
+      "description": "muon mass",
+      "unit": "GeV",
+      "value": 0.10566,
+      "role": "fixed"
+    },
+    {
+      "name": "alpha_prime",
+      "latex": "\\alpha'",
+      "type": "coupling",
+      "description": "Derived effective fine-structure constant of the new U(1)' interaction",
+      "unit": "dimensionless",
+      "role": "derived",
+      "derivation": "alpha_prime = g_prime^2 / (4 * pi)"
+    }
+  ],
+  "interactions": [
+    {
+      "id": "int-001",
+      "latex": "-g' Z'_\\mu \\bar{\\mu} \\gamma^\\mu \\mu",
+      "particles": ["Zp", "mu", "mu_bar"],
+      "lorentz_structure": "vector",
+      "chirality": "V",
+      "coupling": "g_prime",
+      "feynman_rule_note": "vertex factor: -i g' gamma^mu"
+    },
+    {
+      "id": "int-002",
+      "latex": "+g' Z'_\\mu \\bar{\\tau} \\gamma^\\mu \\tau",
+      "particles": ["Zp", "tau", "tau_bar"],
+      "lorentz_structure": "vector",
+      "chirality": "V",
+      "coupling": "g_prime",
+      "feynman_rule_note": "vertex factor: +i g' gamma^mu (opposite sign to muon)"
+    }
+  ],
+  "conventions": {
+    "gauge": "Feynman",
+    "momentum_flow": "all_incoming_at_vertices",
+    "gamma5_scheme": "naive_d_dimensional",
+    "metric_signature": "mostly_minus"
+  },
+  "symmetry_breaking": {
+    "mechanism": "Stueckelberg or Higgs (not specified - does not affect 1-loop muon g-2)",
+    "mixing": "Z-Z' mixing neglected (mixing angle << 1 assumed)"
+  }
+}

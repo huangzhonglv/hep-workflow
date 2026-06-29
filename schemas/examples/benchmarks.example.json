@@ -1,0 +1,44 @@
+{
+  "model_name": "U(1)_{L_mu - L_tau}",
+  "benchmarks": [
+    {
+      "task_id": "task-001",
+      "observable": "delta_a_mu",
+      "has_benchmark": true,
+      "formula_latex": "\\Delta a_\\mu = \\frac{g'^2}{8\\pi^2} \\int_0^1 dx \\frac{2x(1-x)^2}{(1-x)^2 + x r}",
+      "formula_description": "Standard one-loop Z' vector contribution to muon g-2, where r = (M_Zp/m_mu)^2.",
+      "known_limits": [
+        {
+          "limit": "M_Zp >> m_mu",
+          "approximate_result_latex": "\\frac{g'^2 m_\\mu^2}{12 \\pi^2 M_{Z'}^2}",
+          "approximate_result_code": "g_prime**2 * m_mu**2 / (12 * pi**2 * M_Zp**2)",
+          "source": "arXiv:0801.1234",
+          "note": "Heavy-mediator limit used for a quick asymptotic cross-check."
+        }
+      ],
+      "numerical_test_point": {
+        "inputs": {
+          "m_mu": 0.10566,
+          "M_Zp": 200.0,
+          "g_prime": 0.01
+        },
+        "expected_value": 1.17e-12,
+        "tolerance": "1e-14",
+        "source": "computed from the analytic formula",
+        "computation": "Evaluate the heavy-limit expression at the benchmark point.",
+        "unit": "dimensionless"
+      },
+      "sources": [
+        "arXiv:0801.1234"
+      ],
+      "source_type": "literature",
+      "notes": "Verify Package-X reproduces the heavy-Z' limit."
+    },
+    {
+      "task_id": "task-002",
+      "observable": "vertex_form_factor",
+      "has_benchmark": false,
+      "notes": "No closed-form literature benchmark identified for this secondary cross-check task."
+    }
+  ]
+}

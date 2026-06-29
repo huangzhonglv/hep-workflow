@@ -1,0 +1,186 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HEP Calculation Benchmarks",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "model_name",
+    "benchmarks"
+  ],
+  "properties": {
+    "model_name": {
+      "type": "string"
+    },
+    "benchmarks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/benchmark"
+      }
+    }
+  },
+  "$defs": {
+    "task_id": {
+      "type": "string",
+      "pattern": "^task-\\d{3}$"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "literature",
+        "training_knowledge"
+      ]
+    },
+    "known_limit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "limit",
+        "approximate_result_latex",
+        "approximate_result_code",
+        "source"
+      ],
+      "properties": {
+        "limit": {
+          "type": "string"
+        },
+        "approximate_result_latex": {
+          "type": "string"
+        },
+        "approximate_result_code": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "numerical_test_point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "inputs",
+        "expected_value",
+        "tolerance",
+        "source"
+      ],
+      "properties": {
+        "inputs": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": [
+              "number",
+              "string"
+            ]
+          }
+        },
+        "expected_value": {
+          "type": "number"
+        },
+        "tolerance": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "source": {
+          "type": "string"
+        },
+        "computation": {
+          "type": "string"
+        },
+        "unit": {
+          "type": "string"
+        }
+      }
+    },
+    "benchmark": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "observable",
+        "has_benchmark",
+        "notes"
+      ],
+      "properties": {
+        "task_id": {
+          "$ref": "#/$defs/task_id"
+        },
+        "observable": {
+          "type": "string"
+        },
+        "has_benchmark": {
+          "type": "boolean"
+        },
+        "formula_latex": {
+          "type": "string"
+        },
+        "formula_description": {
+          "type": "string"
+        },
+        "known_limits": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/known_limit"
+          }
+        },
+        "numerical_test_point": {
+          "$ref": "#/$defs/numerical_test_point"
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "source_type": {
+          "$ref": "#/$defs/source_type"
+        },
+        "notes": {
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "has_benchmark": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "formula_latex",
+              "formula_description",
+              "known_limits",
+              "sources",
+              "source_type"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "has_benchmark": {
+                "const": false
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "formula_latex": false,
+              "known_limits": false,
+              "numerical_test_point": false
+            }
+          }
+        }
+      ]
+    }
+  }
+}

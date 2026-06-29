@@ -1,0 +1,92 @@
+{
+  "project_name": "{project-name}",
+  "created": "{today's date}",
+  "last_updated": "{today's date}",
+  "active_model_version": "v1",
+  "artifacts": {
+    "idea": {
+      "status": "done",
+      "files": [
+        "idea/proposal.md"
+      ],
+      "produced_by": "hep-idea",
+      "timestamp": "{current timestamp}"
+    },
+    "model": {
+      "status": "done",
+      "version": "v1",
+      "files": [
+        "model/model-spec.json",
+        "model/calc-tasks.json",
+        "model/benchmarks.json"
+      ],
+      "checksum": "{sha256 of model-spec.json}",
+      "produced_by": "hep-idea",
+      "timestamp": "{current timestamp}"
+    },
+    "constraints": {
+      "status": "done",
+      "files": [
+        "constraints/constraints-summary.md",
+        "constraints/constraints-data.json"
+      ],
+      "depends_on": {
+        "model": {
+          "version": "v1",
+          "checksum": "{sha256 of model-spec.json}"
+        }
+      },
+      "produced_by": "hep-idea",
+      "timestamp": "{current timestamp}"
+    },
+    "calculations": {
+      "status": "not_started",
+      "completed_tasks": [],
+      "pending_tasks": [],
+      "depends_on": {
+        "model": {
+          "version": null,
+          "checksum": null
+        }
+      },
+      "produced_by": null,
+      "timestamp": null
+    },
+    "numerics": {
+      "status": "not_started",
+      "files": [],
+      "depends_on": {
+        "model": {
+          "version": null,
+          "checksum": null
+        },
+        "calculations": {
+          "tasks": [],
+          "model_version": null
+        },
+        "constraints": {
+          "checksum": null
+        }
+      },
+      "produced_by": null,
+      "timestamp": null
+    }
+  },
+  "history": [
+    {
+      "action": "idea_complete",
+      "timestamp": "{current timestamp}",
+      "by": "hep-idea"
+    },
+    {
+      "action": "model_complete_v1",
+      "timestamp": "{current timestamp}",
+      "by": "hep-idea"
+    },
+    {
+      "action": "constraints_complete",
+      "timestamp": "{current timestamp}",
+      "by": "hep-idea"
+    }
+  ]
+}

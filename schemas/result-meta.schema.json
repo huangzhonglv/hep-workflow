@@ -1,0 +1,188 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HEP Calculation Result Metadata",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_id",
+    "observable",
+    "python_function",
+    "python_file",
+    "parameters",
+    "return_value",
+    "translation_status",
+    "translation_notes",
+    "source_wl",
+    "calculation_provenance",
+    "benchmark_used_as_input",
+    "package_x_methods",
+    "provenance_notes",
+    "benchmark_status",
+    "depends_on"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "pattern": "^task-\\d{3}$"
+    },
+    "observable": {
+      "type": "string"
+    },
+    "python_function": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+    },
+    "python_file": {
+      "type": "string",
+      "pattern": ".*\\.py$"
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/parameter"
+      }
+    },
+    "return_value": {
+      "$ref": "#/$defs/return_value"
+    },
+    "translation_status": {
+      "type": "string",
+      "enum": [
+        "complete",
+        "partial",
+        "failed"
+      ]
+    },
+    "translation_notes": {
+      "type": "string"
+    },
+    "source_wl": {
+      "type": "string",
+      "pattern": ".*\\.wl$"
+    },
+    "calculation_provenance": {
+      "type": "string",
+      "enum": [
+        "package_x_derived",
+        "manual_tree_algebra",
+        "literature_formula_imported",
+        "blocked"
+      ]
+    },
+    "benchmark_used_as_input": {
+      "type": "boolean"
+    },
+    "package_x_methods": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_]+$"
+      }
+    },
+    "provenance_notes": {
+      "type": "string"
+    },
+    "benchmark_status": {
+      "type": "string",
+      "enum": [
+        "pass",
+        "fail",
+        "skip",
+        "no_benchmark"
+      ]
+    },
+    "depends_on": {
+      "$ref": "#/$defs/depends_on"
+    },
+    "reproduces_paper": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "paper_id",
+        "target_id"
+      ],
+      "properties": {
+        "paper_id": {
+          "type": "string"
+        },
+        "target_id": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "canonical_name": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_]+$"
+    },
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_name",
+        "role",
+        "unit"
+      ],
+      "properties": {
+        "canonical_name": {
+          "$ref": "#/$defs/canonical_name"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "scan",
+            "fixed",
+            "derived"
+          ]
+        },
+        "unit": {
+          "type": "string"
+        }
+      }
+    },
+    "return_value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "unit",
+        "description"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "depends_on": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_version",
+        "model_checksum"
+      ],
+      "properties": {
+        "model_version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "model_checksum": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^(sha256:.+)?$"
+        }
+      }
+    }
+  }
+}

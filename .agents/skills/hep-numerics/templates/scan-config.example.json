@@ -1,0 +1,100 @@
+{
+  "analysis_id": "analysis-001",
+  "model_name": "Minimal Type II Seesaw (scalar triplet extension)",
+  "description": "MEG-II + SINDRUM + KamLAND-Zen exclusion in the (M_Hpp, v_Delta) plane at fixed NH, m_lightest=0",
+  "depends_on": {
+    "model_version": "v1",
+    "model_checksum": "sha256:39bbaef6b5da61ca59ea9fbbbd0dce2cc25253ef58d99ef564af09df6207d7b5",
+    "task_ids": [
+      "task-001",
+      "task-002"
+    ]
+  },
+  "scan_parameters": [
+    {
+      "canonical_name": "M_Hpp",
+      "range": [
+        100,
+        2000
+      ],
+      "grid": 60,
+      "scale": "log"
+    },
+    {
+      "canonical_name": "v_Delta",
+      "range": [
+        1e-05,
+        1.0
+      ],
+      "grid": 60,
+      "scale": "log"
+    }
+  ],
+  "fixed_parameters": [
+    {
+      "canonical_name": "m_lightest",
+      "value": 0.0
+    },
+    {
+      "canonical_name": "alpha1",
+      "value": 0.0
+    },
+    {
+      "canonical_name": "alpha2",
+      "value": 0.0
+    }
+  ],
+  "observables": [
+    {
+      "observable": "Br_mu_to_egamma",
+      "source": {
+        "type": "task",
+        "task_id": "task-001"
+      }
+    },
+    {
+      "observable": "Br_mu_to_3e",
+      "source": {
+        "type": "task",
+        "task_id": "task-002"
+      }
+    },
+    {
+      "observable": "m_eff_bb",
+      "source": {
+        "type": "custom",
+        "function": "m_eff_bb_type_ii",
+        "note": "PMNS + Majorana phases; see custom_observables.py"
+      }
+    }
+  ],
+  "constraints_used": [
+    "c-001",
+    "c-002",
+    "c-003"
+  ],
+  "figures": [
+    {
+      "kind": "exclusion_2d",
+      "x": "M_Hpp",
+      "y": "v_Delta",
+      "constraints": [
+        "c-001",
+        "c-002",
+        "c-003"
+      ],
+      "show_allowed_region": true,
+      "title": "Type-II Seesaw LFV + 0nubb exclusion"
+    },
+    {
+      "kind": "scan_1d",
+      "x": "M_Hpp",
+      "observables": [
+        "Br_mu_to_egamma"
+      ],
+      "overlay_constraint_bands": true
+    }
+  ],
+  "seed": 0,
+  "parallelism": 1
+}

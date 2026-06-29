@@ -1,0 +1,9 @@
+figure.figsize: 4, 3
+axes.prop_cycle: cycler('color', ['#0b7285', '#e03131', '#2f9e44', '#5f3dc4'])
+font.size: 9
+axes.labelsize: 9
+xtick.labelsize: 8
+ytick.labelsize: 8
+lines.linewidth: 1.4
+lines.markersize: 3.5
+legend.frameon: False

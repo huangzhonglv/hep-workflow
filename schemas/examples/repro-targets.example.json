@@ -1,0 +1,110 @@
+{
+  "paper_id": "arxiv:2601.01234v2",
+  "targets": [
+    {
+      "id": "formula-delta-amu",
+      "kind": "formula",
+      "x_param": "M_Zp",
+      "y_param": "alpha_prime",
+      "observables": [
+        "delta_a_mu"
+      ],
+      "fixed": {
+        "m_mu": 0.10566
+      },
+      "constraints_in_paper": [],
+      "data_file": "literature/digitized/formula-delta-amu.json",
+      "tolerance": {
+        "kind": "qualitative",
+        "value": "symbolic_form_requires_human_review"
+      },
+      "expected_qualitative": "The independently derived expression has the same limiting behavior in M_Zp >> m_mu."
+    },
+    {
+      "id": "bench-1",
+      "kind": "benchmark_point",
+      "x_param": "M_Zp",
+      "y_param": "g_prime",
+      "observables": [
+        "delta_a_mu"
+      ],
+      "fixed": {
+        "m_mu": 0.10566
+      },
+      "constraints_in_paper": [
+        "Muon g-2 preferred band"
+      ],
+      "data_file": "literature/digitized/bench-1.csv",
+      "tolerance": {
+        "kind": "relative",
+        "value": 0.05
+      }
+    },
+    {
+      "id": "table-2",
+      "kind": "scan_table",
+      "x_param": "M_Zp",
+      "y_param": "g_prime",
+      "observables": [
+        "delta_a_mu",
+        "Br_tau_to_mumu_mu"
+      ],
+      "fixed": {
+        "m_mu": 0.10566
+      },
+      "constraints_in_paper": [
+        "Trident bound"
+      ],
+      "data_file": "literature/digitized/table-2.csv",
+      "tolerance": {
+        "kind": "absolute",
+        "value": 1e-12
+      }
+    },
+    {
+      "id": "fig-3a",
+      "kind": "figure_curve",
+      "x_param": "M_Zp",
+      "y_param": "g_prime",
+      "observables": [
+        "delta_a_mu"
+      ],
+      "fixed": {
+        "m_mu": 0.10566
+      },
+      "constraints_in_paper": [
+        "Muon g-2 preferred band",
+        "Trident bound"
+      ],
+      "data_file": "literature/digitized/fig-3a.csv",
+      "tolerance": {
+        "kind": "relative",
+        "value": 0.15
+      }
+    },
+    {
+      "id": "fig-5",
+      "kind": "exclusion_region",
+      "x_param": "M_Zp",
+      "y_param": "g_prime",
+      "observables": [
+        "delta_a_mu",
+        "Br_tau_to_mumu_mu"
+      ],
+      "fixed": {
+        "m_mu": 0.10566
+      },
+      "constraints_in_paper": [
+        "Muon g-2 preferred band",
+        "Trident bound",
+        "BaBar four-muon search"
+      ],
+      "data_file": "literature/digitized/fig-5.csv",
+      "tolerance": {
+        "kind": "qualitative",
+        "value": "region_topology"
+      },
+      "expected_qualitative": "Allowed and excluded regions have the same connected components and boundary ordering."
+    }
+  ]
+}

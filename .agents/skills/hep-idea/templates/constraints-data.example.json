@@ -1,0 +1,83 @@
+{
+  "model_name": "U(1)_{L_mu - L_tau}",
+  "parameters": [
+    "M_Zp",
+    "g_prime"
+  ],
+  "constraints": [
+    {
+      "id": "c-001",
+      "name": "muon g-2 (BNL+FNAL combined)",
+      "type": "measurement",
+      "observable": "delta_a_mu",
+      "central_value": 2.49e-9,
+      "uncertainty": 0.48e-9,
+      "sigma": 1,
+      "source": "arXiv:2104.03281, Phys. Rev. Lett. 126, 141801 (2021)",
+      "implementation_status": "direct",
+      "notes": "Combined BNL E821 + FNAL Run-1 result",
+      "computed_by": {
+        "type": "task",
+        "task_id": "task-001"
+      }
+    },
+    {
+      "id": "c-002",
+      "name": "LHC Z' dimuon search (ATLAS)",
+      "type": "upper_limit",
+      "observable": "sigma_pp_to_Zp_to_mumu",
+      "confidence_level": 0.95,
+      "source": "arXiv:...",
+      "interpolation": {
+        "file": "constraints/atlas-dimuon-limit.csv",
+        "x_parameter": "M_Zp",
+        "x_unit": "GeV",
+        "y_quantity": "sigma_pp_to_Zp_to_mumu",
+        "y_unit": "fb",
+        "method": "loglog_linear",
+        "valid_range": [
+          10,
+          6000
+        ],
+        "extrapolation_policy": "forbidden"
+      },
+      "implementation_status": "interpolated",
+      "notes": "95% CL upper limit on sigma*BR as function of M_Zp; the CSV asset is already available locally, and hep-numerics can pair it with a dedicated external rate implementation.",
+      "computed_by": {
+        "type": "external",
+        "note": "Uses a dedicated dimuon production-rate module outside the current calc-tasks list; the experimental limit itself is supplied by the local interpolation asset."
+      }
+    },
+    {
+      "id": "c-003",
+      "name": "neutrino trident production",
+      "type": "upper_limit",
+      "observable": "sigma_trident_ratio",
+      "limit_value": 1.7,
+      "confidence_level": 0.95,
+      "source": "CCFR, Phys. Rev. Lett. 66, 3117 (1991)",
+      "implementation_status": "manual_only",
+      "notes": "sigma(nu_mu N -> nu_mu mu+ mu- N) / sigma_SM < 1.7; kept as recorded-only until a dedicated trident evaluator is bundled into the current workflow.",
+      "computed_by": {
+        "type": "external",
+        "note": "Requires dedicated trident cross-section calculation not currently bundled into the workflow."
+      }
+    },
+    {
+      "id": "c-004",
+      "name": "LEP Z' contact interaction bounds",
+      "type": "lower_limit",
+      "observable": "M_Zp_over_g_prime",
+      "limit_value": 500,
+      "unit": "GeV",
+      "confidence_level": 0.95,
+      "source": "LEP EWWG",
+      "implementation_status": "manual_only",
+      "notes": "Recast required; bound depends on model-specific assumptions about Z' couplings to electrons",
+      "computed_by": {
+        "type": "parameter_combination",
+        "formula": "M_Zp / g_prime"
+      }
+    }
+  ]
+}

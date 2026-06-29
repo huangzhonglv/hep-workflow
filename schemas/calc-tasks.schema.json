@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HEP Calculation Tasks",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "model_name",
+    "tasks"
+  ],
+  "properties": {
+    "model_name": {
+      "type": "string"
+    },
+    "model_version": {
+      "type": "string",
+      "pattern": "^v\\d+$"
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/task"
+      }
+    }
+  },
+  "$defs": {
+    "canonical_name": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_]+$"
+    },
+    "particle_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "propagator",
+        "mass"
+      ],
+      "properties": {
+        "propagator": {
+          "type": "string"
+        },
+        "mass": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/canonical_name"
+            },
+            {
+              "const": 0
+            }
+          ]
+        }
+      }
+    },
+    "momentum_label": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_]+$"
+    },
+    "external_leg": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "particle",
+        "momentum"
+      ],
+      "properties": {
+        "particle": {
+          "$ref": "#/$defs/canonical_name"
+        },
+        "momentum": {
+          "$ref": "#/$defs/momentum_label"
+        }
+      }
+    },
+    "external_leg_list": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/external_leg"
+      }
+    },
+    "external_leg_or_list": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/external_leg"
+        },
+        {
+          "$ref": "#/$defs/external_leg_list"
+        }
+      ]
+    },
+    "external_particles": {
+      "type": "object",
+      "required": [
+        "incoming",
+        "outgoing"
+      ],
+      "properties": {
+        "incoming": {
+          "$ref": "#/$defs/external_leg_list"
+        },
+        "outgoing": {
+          "$ref": "#/$defs/external_leg_list"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/external_leg_or_list"
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "title",
+        "type",
+        "loop_order",
+        "process",
+        "lagrangian_terms",
+        "external_particles",
+        "target_quantity",
+        "on_shell",
+        "priority",
+        "notes"
+      ],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "pattern": "^task-\\d{3}$"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "tree",
+            "loop"
+          ]
+        },
+        "loop_order": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "process": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "lagrangian_terms": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "external_particles": {
+          "$ref": "#/$defs/external_particles"
+        },
+        "loop_particles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/particle_ref"
+          }
+        },
+        "target_quantity": {
+          "type": "string"
+        },
+        "on_shell": {
+          "type": "boolean"
+        },
+        "kinematics": {
+          "type": "string"
+        },
+        "output_formula": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "string",
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "notes": {
+          "type": "string"
+        },
+        "convention_overrides": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "loop"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "loop_order",
+              "loop_particles"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

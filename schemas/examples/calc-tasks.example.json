@@ -1,0 +1,96 @@
+{
+  "model_name": "U(1)_{L_mu - L_tau}",
+  "model_version": "v1",
+  "tasks": [
+    {
+      "task_id": "task-001",
+      "title": "Z' contribution to muon g-2 at one loop",
+      "type": "loop",
+      "loop_order": 1,
+      "process": "Z' → muon anomalous magnetic moment",
+      "description": "Reference one-loop task using canonical parameter names from the model spec.",
+      "lagrangian_terms": [
+        "L_int = - g' Z'_mu (bar{mu} gamma^mu mu - bar{tau} gamma^mu tau)"
+      ],
+      "external_particles": {
+        "incoming": [
+          {
+            "particle": "mu",
+            "momentum": "p1"
+          }
+        ],
+        "outgoing": [
+          {
+            "particle": "mu",
+            "momentum": "p2"
+          }
+        ],
+        "virtual_boson": {
+          "particle": "gamma",
+          "momentum": "q"
+        }
+      },
+      "loop_particles": [
+        {
+          "propagator": "mu",
+          "mass": "m_mu"
+        },
+        {
+          "propagator": "Zp",
+          "mass": "M_Zp"
+        }
+      ],
+      "target_quantity": "form_factor_F2",
+      "on_shell": true,
+      "kinematics": "p1^2 = p2^2 = m_mu^2 and q^2 -> 0 for the external photon probe.",
+      "output_formula": "delta_a_mu = prefactor * F2(0)",
+      "priority": "high",
+      "notes": "This is the primary observable motivating the model."
+    },
+    {
+      "task_id": "task-002",
+      "title": "Muon self-energy with a massless photon in the loop",
+      "type": "loop",
+      "loop_order": 1,
+      "process": "mu -> mu self-energy in a QED-like limit",
+      "description": "Demonstrates that a loop propagator mass can be written as numeric 0 for a massless field.",
+      "lagrangian_terms": [
+        "L_int = - e A_mu bar{mu} gamma^mu mu"
+      ],
+      "external_particles": {
+        "incoming": [
+          {
+            "particle": "mu",
+            "momentum": "p1"
+          }
+        ],
+        "outgoing": [
+          {
+            "particle": "mu",
+            "momentum": "p2"
+          }
+        ],
+        "mediator": {
+          "particle": "A",
+          "momentum": "q"
+        }
+      },
+      "loop_particles": [
+        {
+          "propagator": "mu",
+          "mass": "m_mu"
+        },
+        {
+          "propagator": "photon",
+          "mass": 0
+        }
+      ],
+      "target_quantity": "self_energy_Sigma",
+      "on_shell": false,
+      "kinematics": "Keep general p^2 and use a massless internal photon.",
+      "output_formula": "Sigma(p) = A(p^2) pslash + B(p^2)",
+      "priority": "medium",
+      "notes": "Secondary example covering the massless propagator convention."
+    }
+  ]
+}

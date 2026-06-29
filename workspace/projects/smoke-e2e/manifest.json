@@ -1,0 +1,135 @@
+{
+  "project_name": "smoke-e2e",
+  "created": "2026-04-22",
+  "last_updated": "2026-05-09",
+  "active_model_version": "v1",
+  "artifacts": {
+    "idea": {
+      "status": "done",
+      "files": [
+        "idea/proposal.md"
+      ],
+      "produced_by": "codex",
+      "timestamp": "2026-04-22T00:00:00Z"
+    },
+    "model": {
+      "status": "done",
+      "version": "v1",
+      "files": [
+        "model/model-spec.json",
+        "model/calc-tasks.json",
+        "model/benchmarks.json"
+      ],
+      "checksum": "sha256:c1f3ba396d020c60408998c90681fec754b76a36ba763088dd3285e58334fdd1",
+      "produced_by": "codex",
+      "timestamp": "2026-04-22T00:00:01Z"
+    },
+    "constraints": {
+      "status": "done",
+      "files": [
+        "constraints/constraints-data.json"
+      ],
+      "depends_on": {
+        "model": {
+          "version": "v1",
+          "checksum": "sha256:c1f3ba396d020c60408998c90681fec754b76a36ba763088dd3285e58334fdd1"
+        }
+      },
+      "produced_by": "codex",
+      "timestamp": "2026-04-22T00:00:02Z"
+    },
+    "calculations": {
+      "status": "done",
+      "completed_tasks": [
+        "task-001"
+      ],
+      "pending_tasks": [],
+      "depends_on": {
+        "model": {
+          "version": "v1",
+          "checksum": "sha256:c1f3ba396d020c60408998c90681fec754b76a36ba763088dd3285e58334fdd1"
+        }
+      },
+      "produced_by": "codex",
+      "timestamp": "2026-04-22T00:00:03Z"
+    },
+    "numerics": {
+      "status": "not_started",
+      "files": [],
+      "depends_on": {
+        "model": {
+          "version": null,
+          "checksum": null
+        },
+        "calculations": {
+          "tasks": [],
+          "model_version": null
+        },
+        "constraints": {
+          "checksum": null
+        }
+      },
+      "analyses": [],
+      "produced_by": null,
+      "timestamp": null
+    },
+    "literature": {
+      "status": "done",
+      "files": [
+        "literature/paper-meta.json",
+        "literature/paper-extract.json",
+        "literature/repro-targets.json",
+        "literature/digitized/target-001.csv",
+        "literature/style/paper-style.mplstyle",
+        "literature/repro-summary.md"
+      ],
+      "produced_by": "hep-paper-formalize",
+      "timestamp": "2026-05-09T00:00:00Z"
+    },
+    "reproduction": {
+      "status": "not_started",
+      "runs": [],
+      "depends_on": {
+        "model": {
+          "version": "v1",
+          "checksum": "sha256:c1f3ba396d020c60408998c90681fec754b76a36ba763088dd3285e58334fdd1"
+        },
+        "literature": {
+          "checksum": null
+        },
+        "numerics": {
+          "analyses": []
+        }
+      },
+      "produced_by": null,
+      "timestamp": null
+    }
+  },
+  "history": [
+    {
+      "action": "idea_complete",
+      "timestamp": "2026-04-22T00:00:00Z",
+      "by": "codex"
+    },
+    {
+      "action": "model_complete_v1",
+      "timestamp": "2026-04-22T00:00:01Z",
+      "by": "codex"
+    },
+    {
+      "action": "constraints_complete",
+      "timestamp": "2026-04-22T00:00:02Z",
+      "by": "codex"
+    },
+    {
+      "action": "calc_task_task-001_complete",
+      "timestamp": "2026-04-22T00:00:03Z",
+      "by": "codex"
+    },
+    {
+      "action": "literature_complete",
+      "timestamp": "2026-05-09T00:00:00Z",
+      "by": "hep-paper-formalize"
+    }
+  ]
+}

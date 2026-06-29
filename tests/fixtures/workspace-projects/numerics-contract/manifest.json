@@ -1,0 +1,102 @@
+{
+  "project_name": "numerics-contract",
+  "created": "2026-06-23",
+  "last_updated": "2026-06-23",
+  "active_model_version": "v1",
+  "artifacts": {
+    "idea": {
+      "status": "done",
+      "files": [
+        "idea/proposal.md"
+      ],
+      "produced_by": "pytest-fixture",
+      "timestamp": "2026-06-23T00:00:00Z"
+    },
+    "model": {
+      "status": "done",
+      "version": "v1",
+      "files": [
+        "model/model-spec.json",
+        "model/calc-tasks.json",
+        "model/benchmarks.json"
+      ],
+      "checksum": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "produced_by": "pytest-fixture",
+      "timestamp": "2026-06-23T00:00:00Z"
+    },
+    "calculations": {
+      "status": "done",
+      "completed_tasks": [
+        "task-001"
+      ],
+      "pending_tasks": [],
+      "depends_on": {
+        "model": {
+          "version": "v1",
+          "checksum": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+        }
+      },
+      "produced_by": "pytest-fixture",
+      "timestamp": "2026-06-23T00:00:00Z"
+    },
+    "constraints": {
+      "status": "done",
+      "files": [
+        "constraints/constraints-data.json"
+      ],
+      "depends_on": {
+        "model": {
+          "version": "v1",
+          "checksum": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+        }
+      },
+      "produced_by": "pytest-fixture",
+      "timestamp": "2026-06-23T00:00:00Z"
+    },
+    "numerics": {
+      "status": "done",
+      "files": [
+        "numerics/custom_observables.py",
+        "numerics/scan-configs/analysis-001.json",
+        "numerics/scan-results/analysis-001/scan.csv",
+        "numerics/scan-results/analysis-001/scan.meta.json",
+        "numerics/analysis-summary-analysis-001.md"
+      ],
+      "depends_on": {
+        "model": {
+          "version": "v1",
+          "checksum": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+        },
+        "calculations": {
+          "tasks": [
+            "task-001"
+          ],
+          "model_version": "v1"
+        },
+        "constraints": {
+          "checksum": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+        }
+      },
+      "analyses": [
+        "analysis-001"
+      ],
+      "produced_by": "pytest-fixture",
+      "timestamp": "2026-06-23T00:00:00Z"
+    }
+  },
+  "history": [
+    {
+      "action": "idea_complete",
+      "timestamp": "2026-06-23T00:00:00Z",
+      "by": "pytest-fixture",
+      "note": "Synthetic numerics contract fixture; not a physics result."
+    },
+    {
+      "action": "numerics_analysis_complete",
+      "analysis_id": "analysis-001",
+      "timestamp": "2026-06-23T00:00:00Z",
+      "by": "pytest-fixture",
+      "note": "Precomputed synthetic analysis for workspace validator tests."
+    }
+  ]
+}

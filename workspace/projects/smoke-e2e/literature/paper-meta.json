@@ -1,0 +1,14 @@
+{
+  "arxiv": "arxiv:2605.00001v1",
+  "doi": "10.1234/smoke-e2e.toy.2026.001",
+  "title": "Toy Scalar Smoke Tests for Reproduction Workflows",
+  "authors": [
+    "Ada Test",
+    "Ben Fixture"
+  ],
+  "year": 2026,
+  "journal": "Journal of Synthetic HEP Fixtures",
+  "version_used": "v1",
+  "retrieved": "2026-05-09",
+  "hash": "sha256:0f9c6f0e4d8d41d1b9e9f2d72d7d8a57e4a8cf64f1b64a9e8c7a43d1f0e2c3b4"
+}

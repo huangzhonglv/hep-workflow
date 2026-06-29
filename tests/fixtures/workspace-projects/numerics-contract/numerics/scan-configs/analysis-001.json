@@ -1,0 +1,50 @@
+{
+  "analysis_id": "analysis-001",
+  "model_name": "Toy Numerics Contract Model",
+  "description": "Synthetic precomputed scan for validator contract tests.",
+  "depends_on": {
+    "model_version": "v1",
+    "model_checksum": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "task_ids": [
+      "task-001"
+    ]
+  },
+  "scan_parameters": [
+    {
+      "canonical_name": "M_Hpp",
+      "range": [
+        100.0,
+        200.0
+      ],
+      "grid": 2,
+      "scale": "linear"
+    }
+  ],
+  "fixed_parameters": [
+    {
+      "canonical_name": "v_Delta",
+      "value": 0.001
+    },
+    {
+      "canonical_name": "m_lightest",
+      "value": 0.01
+    }
+  ],
+  "observables": [
+    {
+      "observable": "Br_mu_to_egamma",
+      "source": {
+        "type": "task",
+        "task_id": "task-001"
+      }
+    }
+  ],
+  "constraints_used": [
+    "c-005",
+    "c-006"
+  ],
+  "figures": [],
+  "allow_formula_fallback": true,
+  "seed": 0,
+  "parallelism": 1
+}

@@ -1,0 +1,89 @@
+{
+  "model_name": "U(1)_{L_mu - L_tau}",
+  "tasks": [
+    {
+      "task_id": "task-001",
+      "title": "Z' contribution to muon g-2 at one loop",
+      "type": "loop",
+      "loop_order": 1,
+      "process": "Z' -> muon anomalous magnetic moment",
+      "lagrangian_terms": [
+        "L_int = - g' Z'_mu (bar{mu} gamma^mu mu - bar{tau} gamma^mu tau)"
+      ],
+      "external_particles": {
+        "incoming": [
+          {
+            "particle": "mu",
+            "momentum": "p1"
+          }
+        ],
+        "outgoing": [
+          {
+            "particle": "mu",
+            "momentum": "p2"
+          }
+        ],
+        "virtual_boson": {
+          "particle": "gamma",
+          "momentum": "q"
+        }
+      },
+      "loop_particles": [
+        {
+          "propagator": "mu",
+          "mass": "m_mu"
+        },
+        {
+          "propagator": "Zp",
+          "mass": "M_Zp"
+        }
+      ],
+      "target_quantity": "form_factor_F2",
+      "on_shell": true,
+      "priority": "high",
+      "notes": "This is the primary observable motivating the model."
+    },
+    {
+      "task_id": "task-002",
+      "title": "Z'-mu-mu vertex correction",
+      "type": "loop",
+      "loop_order": 1,
+      "process": "One-loop correction to the Z'-mu-mu vertex",
+      "lagrangian_terms": [
+        "L_int = - g' Z'_mu bar{mu} gamma^mu mu"
+      ],
+      "external_particles": {
+        "incoming": [
+          {
+            "particle": "mu",
+            "momentum": "p1"
+          }
+        ],
+        "outgoing": [
+          {
+            "particle": "mu",
+            "momentum": "p2"
+          }
+        ],
+        "mediator": {
+          "particle": "Zp",
+          "momentum": "q"
+        }
+      },
+      "loop_particles": [
+        {
+          "propagator": "mu",
+          "mass": "m_mu"
+        },
+        {
+          "propagator": "Zp",
+          "mass": "M_Zp"
+        }
+      ],
+      "target_quantity": "vertex_form_factor",
+      "on_shell": true,
+      "priority": "medium",
+      "notes": "Secondary observable for cross-checks."
+    }
+  ]
+}

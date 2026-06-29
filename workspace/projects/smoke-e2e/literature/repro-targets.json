@@ -1,0 +1,43 @@
+{
+  "paper_id": "arxiv:2605.00001v1",
+  "targets": [
+    {
+      "id": "target-001",
+      "kind": "figure_curve",
+      "x_param": "M_Hpp",
+      "y_param": "BR_toy",
+      "observables": [
+        "BR_toy"
+      ],
+      "fixed": {
+        "v_Delta": 0.001
+      },
+      "constraints_in_paper": [
+        "Toy BR upper limit"
+      ],
+      "data_file": "literature/digitized/target-001.csv",
+      "tolerance": {
+        "kind": "relative",
+        "value": 1e-12
+      }
+    },
+    {
+      "id": "target-002",
+      "kind": "benchmark_point",
+      "x_param": "M_Hpp",
+      "y_param": "BR_toy",
+      "observables": [
+        "BR_toy"
+      ],
+      "fixed": {},
+      "constraints_in_paper": [
+        "Toy BR upper limit"
+      ],
+      "data_file": "literature/digitized/target-002.csv",
+      "tolerance": {
+        "kind": "relative",
+        "value": 1e-12
+      }
+    }
+  ]
+}

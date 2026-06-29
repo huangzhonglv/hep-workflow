@@ -1,0 +1,278 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HEP Numerics Scan Configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "analysis_id",
+    "model_name",
+    "depends_on",
+    "scan_parameters",
+    "fixed_parameters",
+    "observables",
+    "constraints_used",
+    "figures"
+  ],
+  "properties": {
+    "analysis_id": {
+      "type": "string",
+      "pattern": "^analysis-\\d{3}$"
+    },
+    "model_name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "depends_on": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_version",
+        "model_checksum",
+        "task_ids"
+      ],
+      "properties": {
+        "model_version": {
+          "type": "string",
+          "pattern": "^v\\d+$"
+        },
+        "model_checksum": {
+          "type": "string",
+          "pattern": "^sha256:.+"
+        },
+        "task_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^task-\\d{3}$"
+          }
+        }
+      }
+    },
+    "scan_parameters": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {
+        "$ref": "#/$defs/scan_param"
+      }
+    },
+    "fixed_parameters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/fixed_param"
+      }
+    },
+    "observables": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/observable_binding"
+      }
+    },
+    "constraints_used": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^c-\\d{3}$"
+      }
+    },
+    "figures": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/figure_spec"
+      }
+    },
+    "allow_formula_fallback": {
+      "type": "boolean",
+      "default": false,
+      "description": "Explicit opt-in for task backends whose result-meta calculation_provenance is literature_formula_imported or manual_tree_algebra."
+    },
+    "seed": {
+      "type": "integer",
+      "default": 0
+    },
+    "parallelism": {
+      "type": "integer",
+      "minimum": 1,
+      "default": 1
+    }
+  },
+  "$defs": {
+    "scan_param": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_name",
+        "range",
+        "grid",
+        "scale"
+      ],
+      "properties": {
+        "canonical_name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_]+$"
+        },
+        "range": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number"
+          }
+        },
+        "grid": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "scale": {
+          "enum": [
+            "linear",
+            "log"
+          ]
+        }
+      }
+    },
+    "fixed_param": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_name",
+        "value"
+      ],
+      "properties": {
+        "canonical_name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_]+$"
+        },
+        "value": {
+          "type": "number"
+        }
+      }
+    },
+    "observable_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "observable",
+        "source"
+      ],
+      "properties": {
+        "observable": {
+          "type": "string"
+        },
+        "source": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "task_id"
+              ],
+              "properties": {
+                "type": {
+                  "const": "task"
+                },
+                "task_id": {
+                  "type": "string",
+                  "pattern": "^task-\\d{3}$"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "function"
+              ],
+              "properties": {
+                "type": {
+                  "const": "custom"
+                },
+                "function": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                },
+                "note": {
+                  "type": "string"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "figure_spec": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "x",
+            "y",
+            "constraints"
+          ],
+          "properties": {
+            "kind": {
+              "const": "exclusion_2d"
+            },
+            "x": {
+              "type": "string"
+            },
+            "y": {
+              "type": "string"
+            },
+            "constraints": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "show_allowed_region": {
+              "type": "boolean",
+              "default": true
+            },
+            "title": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "x",
+            "observables"
+          ],
+          "properties": {
+            "kind": {
+              "const": "scan_1d"
+            },
+            "x": {
+              "type": "string"
+            },
+            "observables": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            },
+            "overlay_constraint_bands": {
+              "type": "boolean",
+              "default": true
+            },
+            "title": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

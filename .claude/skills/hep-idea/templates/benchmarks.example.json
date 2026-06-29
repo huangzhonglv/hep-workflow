@@ -1,0 +1,48 @@
+{
+  "model_name": "...",
+  "benchmarks": [
+    {
+      "task_id": "task-001",
+      "observable": "delta_a_mu",
+      "has_benchmark": true,
+      "formula_latex": "\\Delta a_\\mu = \\frac{g'^2}{8\\pi^2} \\int_0^1 dx \\frac{...}{...}",
+      "formula_description": "Standard one-loop vector-boson contribution to muon g-2. Valid for pure vector coupling.",
+      "known_limits": [
+        {
+          "limit": "M_Zp >> m_mu",
+          "approximate_result_latex": "\\frac{g'^2 m_\\mu^2}{12 \\pi^2 M_{Z'}^2}",
+          "approximate_result_code": "g_prime**2 * m_mu**2 / (12 * pi**2 * M_Zp**2)",
+          "source": "arXiv:0801.1234"
+        }
+      ],
+      "numerical_test_point": {
+        "inputs": {
+          "m_mu": 0.10566,
+          "M_Zp": 200.0,
+          "g_prime": 0.01
+        },
+        "expected_value": 1.17e-12,
+        "tolerance": "1e-14",
+        "source": "computed from the formula above"
+      },
+      "sources": [
+        "arXiv:0801.1234",
+        "Jegerlehner & Nyffeler, Phys. Rept. 477 (2009)"
+      ],
+      "source_type": "literature",
+      "notes": "Verify that Package-X result reproduces this in the m_mu/M_Zp -> 0 limit."
+    },
+    {
+      "task_id": "task-002",
+      "observable": "...",
+      "has_benchmark": false,
+      "formula_latex": null,
+      "formula_description": null,
+      "known_limits": [],
+      "numerical_test_point": null,
+      "sources": [],
+      "source_type": null,
+      "notes": "No closed-form result found. Consider checking numerical agreement with MadGraph or comparing with other tools."
+    }
+  ]
+}

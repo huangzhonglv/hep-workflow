@@ -1,0 +1,68 @@
+{
+  "project_name": "test",
+  "created": "2026-04-01",
+  "last_updated": "2026-04-01",
+  "active_model_version": null,
+  "artifacts": {
+    "idea": {
+      "status": "not_started",
+      "files": [],
+      "produced_by": null,
+      "timestamp": null
+    },
+    "model": {
+      "status": "not_started",
+      "version": null,
+      "files": [],
+      "checksum": null,
+      "produced_by": null,
+      "timestamp": null
+    },
+    "calculations": {
+      "status": "not_started",
+      "completed_tasks": [],
+      "pending_tasks": [],
+      "depends_on": {
+        "model": {
+          "version": null,
+          "checksum": null
+        }
+      },
+      "produced_by": null,
+      "timestamp": null
+    },
+    "constraints": {
+      "status": "not_started",
+      "files": [],
+      "depends_on": {
+        "model": {
+          "version": null,
+          "checksum": null
+        }
+      },
+      "produced_by": null,
+      "timestamp": null
+    },
+    "numerics": {
+      "status": "not_started",
+      "files": [],
+      "depends_on": {
+        "model": {
+          "version": null,
+          "checksum": null
+        },
+        "calculations": {
+          "tasks": [],
+          "model_version": null
+        },
+        "constraints": {
+          "checksum": null
+        }
+      },
+      "analyses": [],
+      "produced_by": null,
+      "timestamp": null
+    }
+  },
+  "history": []
+}

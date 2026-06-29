@@ -1,0 +1,298 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HEP Scan Metadata",
+  "type": "object",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/run_scan_meta"
+    },
+    {
+      "$ref": "#/$defs/derived_analysis_meta"
+    }
+  ],
+  "$defs": {
+    "analysis_id": {
+      "type": "string",
+      "pattern": "^analysis-\\d{3}$"
+    },
+    "checksum": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|\\+00:00)$"
+    },
+    "history_action": {
+      "type": "string",
+      "enum": [
+        "numerics_analysis_complete",
+        "numerics_analysis_rerun"
+      ]
+    },
+    "timing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "started_at",
+        "finished_at",
+        "seconds"
+      ],
+      "properties": {
+        "started_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "finished_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "seconds": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": [
+        "python"
+      ],
+      "properties": {
+        "python": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "formula_fallback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "observable",
+        "calculation_provenance",
+        "benchmark_used_as_input"
+      ],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "pattern": "^task-\\d{3}$"
+        },
+        "observable": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "calculation_provenance": {
+          "type": "string",
+          "enum": [
+            "literature_formula_imported",
+            "manual_tree_algebra"
+          ]
+        },
+        "benchmark_used_as_input": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "run_scan_meta": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "analysis_id",
+        "history_action",
+        "scan_config_snapshot",
+        "model_version",
+        "model_checksum",
+        "seed",
+        "started_at",
+        "finished_at",
+        "timing_seconds",
+        "timing",
+        "n_points",
+        "n_allowed",
+        "n_excluded",
+        "n_skipped",
+        "environment",
+        "formula_fallbacks",
+        "warnings"
+      ],
+      "properties": {
+        "analysis_id": {
+          "$ref": "#/$defs/analysis_id"
+        },
+        "history_action": {
+          "$ref": "#/$defs/history_action"
+        },
+        "scan_config_snapshot": {
+          "type": "object"
+        },
+        "model_version": {
+          "type": "string",
+          "pattern": "^v\\d+$"
+        },
+        "model_checksum": {
+          "$ref": "#/$defs/checksum"
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "started_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "finished_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "timing_seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "timing": {
+          "$ref": "#/$defs/timing"
+        },
+        "n_points": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "n_allowed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "n_excluded": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "n_skipped": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "environment": {
+          "$ref": "#/$defs/environment"
+        },
+        "formula_fallbacks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/formula_fallback"
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "scan_parameters": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    "derived_analysis_meta": {
+      "type": "object",
+      "required": [
+        "analysis_id",
+        "description",
+        "generated_at"
+      ],
+      "properties": {
+        "analysis_id": {
+          "$ref": "#/$defs/analysis_id"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generated_at": {
+          "$ref": "#/$defs/timestamp"
+        },
+        "source_analysis": {
+          "type": "string"
+        },
+        "source_analyses": {
+          "type": "array",
+          "minItems": 1
+        },
+        "source_files": {
+          "oneOf": [
+            {
+              "type": "array",
+              "minItems": 1
+            },
+            {
+              "type": "object",
+              "minProperties": 1
+            }
+          ]
+        },
+        "external_sources": {
+          "oneOf": [
+            {
+              "type": "array",
+              "minItems": 1
+            },
+            {
+              "type": "object",
+              "minProperties": 1
+            }
+          ]
+        },
+        "sources": {
+          "oneOf": [
+            {
+              "type": "array",
+              "minItems": 1
+            },
+            {
+              "type": "object",
+              "minProperties": 1
+            }
+          ]
+        },
+        "outputs": {
+          "type": "array",
+          "minItems": 1
+        }
+      },
+      "anyOf": [
+        {
+          "required": [
+            "source_analysis"
+          ]
+        },
+        {
+          "required": [
+            "source_analyses"
+          ]
+        },
+        {
+          "required": [
+            "source_files"
+          ]
+        },
+        {
+          "required": [
+            "external_sources"
+          ]
+        },
+        {
+          "required": [
+            "sources"
+          ]
+        },
+        {
+          "required": [
+            "outputs"
+          ]
+        }
+      ],
+      "additionalProperties": true
+    }
+  }
+}

@@ -1,0 +1,353 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HEP Constraints Data",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "model_name",
+    "parameters",
+    "constraints"
+  ],
+  "properties": {
+    "model_name": {
+      "type": "string"
+    },
+    "model_version": {
+      "type": "string",
+      "pattern": "^v\\d+$"
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/canonical_name"
+      }
+    },
+    "constraints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/constraint"
+      }
+    }
+  },
+  "$defs": {
+    "canonical_name": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_]+$"
+    },
+    "parameter_range": {
+      "type": "object",
+      "required": [
+        "unit"
+      ],
+      "properties": {
+        "unit": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "number"
+            }
+          },
+          {
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "interpolation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "x_parameter",
+        "x_unit",
+        "y_quantity",
+        "y_unit",
+        "method",
+        "valid_range",
+        "extrapolation_policy"
+      ],
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "x_parameter": {
+          "$ref": "#/$defs/canonical_name"
+        },
+        "x_unit": {
+          "type": "string"
+        },
+        "y_quantity": {
+          "type": "string"
+        },
+        "y_unit": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        },
+        "valid_range": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number"
+          }
+        },
+        "extrapolation_policy": {
+          "type": "string"
+        }
+      }
+    },
+    "computed_by": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "task_id"
+          ],
+          "properties": {
+            "type": {
+              "const": "task"
+            },
+            "task_id": {
+              "type": "string",
+              "pattern": "^task-\\d{3}$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "depends_on_tasks",
+            "derivation_note"
+          ],
+          "properties": {
+            "type": {
+              "const": "derived"
+            },
+            "depends_on_tasks": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^task-\\d{3}$"
+              }
+            },
+            "derivation_note": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "formula"
+          ],
+          "properties": {
+            "type": {
+              "const": "parameter_combination"
+            },
+            "formula": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "note"
+          ],
+          "properties": {
+            "type": {
+              "const": "external"
+            },
+            "note": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "type",
+        "observable",
+        "source",
+        "implementation_status",
+        "notes"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^c-\\d{3}$"
+        },
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "enum": [
+            "measurement",
+            "upper_limit",
+            "lower_limit",
+            "allowed_band",
+            "ratio"
+          ]
+        },
+        "observable": {
+          "type": "string"
+        },
+        "central_value": {
+          "type": "number"
+        },
+        "uncertainty": {
+          "type": "number"
+        },
+        "sigma": {
+          "type": "number"
+        },
+        "limit_value": {
+          "type": "number"
+        },
+        "limit_value_min": {
+          "type": "number"
+        },
+        "limit_value_max": {
+          "type": "number"
+        },
+        "limit_function": {
+          "deprecated": true,
+          "type": "string"
+        },
+        "confidence_level": {
+          "type": "number"
+        },
+        "parameter_range": {
+          "deprecated": true,
+          "$ref": "#/$defs/parameter_range"
+        },
+        "interpolation": {
+          "$ref": "#/$defs/interpolation"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "implementation_status": {
+          "type": "string",
+          "enum": [
+            "direct",
+            "interpolated",
+            "manual_only"
+          ]
+        },
+        "notes": {
+          "type": "string"
+        },
+        "computed_by": {
+          "$ref": "#/$defs/computed_by"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "measurement"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "central_value",
+              "uncertainty",
+              "sigma"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "implementation_status": {
+                "const": "interpolated"
+              }
+            }
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "interpolation"
+                ]
+              },
+              {
+                "required": [
+                  "limit_function",
+                  "parameter_range"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "upper_limit",
+                  "lower_limit"
+                ]
+              }
+            }
+          },
+          "then": {
+            "anyOf": [
+              {
+                "properties": {
+                  "implementation_status": {
+                    "const": "manual_only"
+                  }
+                }
+              },
+              {
+                "required": [
+                  "limit_value"
+                ]
+              },
+              {
+                "required": [
+                  "limit_function"
+                ]
+              },
+              {
+                "required": [
+                  "interpolation"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
