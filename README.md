@@ -4,24 +4,24 @@
 > from model proposal through symbolic calculation to numerical scans
 > and publication-oriented exclusion plots.
 
-**Status**: research preview. Skill contracts and workspace artifact formats
-are under active iteration. Use at your own risk; pin to a specific commit if
-you build on top.
-
-This repository ships agent and skill definitions, JSON Schemas, validators,
-fixtures, and tests. It is not a packaged runtime application.
-
 ## What this is for
 
-When you have a beyond-the-Standard-Model Lagrangian and want to:
+`hep-workflow` is a contract-tested scaffold for agent-assisted HEP
+phenomenology. It is designed for workflows where the important outputs are
+auditable project artifacts, not hidden notebook state or one-off chat
+transcripts.
 
-1. Generate canonical model and constraint artifacts.
-2. Compute observables symbolically with reproducible LaTeX and Python output.
-3. Run numerical parameter scans with constraint overlays.
-4. Produce publication-style 2D exclusion overlays and 1D parameter scans,
-   plus a written analysis summary.
-5. Optionally formalize and compare against a published paper while keeping
-   reproduction targets separate from computational backends.
+Use it when you want to:
+
+1. Turn a BSM idea or Lagrangian into canonical model, calculation, constraint,
+   and benchmark artifacts.
+2. Derive symbolic observables with explicit provenance, Package-X /
+   Mathematica code, and Python translations.
+3. Run reproducible numerical scans with constraint overlays, figures, and
+   analysis summaries.
+4. Import a published paper into separate literature and reproduction artifacts,
+   compare against reference data mechanically, and keep paper formulas separate
+   from computational backends unless explicitly marked as fallback.
 
 `hep-workflow` provides two coordinated workflow surfaces:
 
@@ -74,10 +74,10 @@ and are not part of the public release.
 | [`package-scribe`](./.claude/skills/package-scribe/SKILL.md) | Symbolic calculation: Mathematica and Python with benchmark verification | Triggered by "compute the analytical expression for ..." |
 | [`hep-numerics`](./.claude/skills/hep-numerics/SKILL.md) | Parameter scans, constraint evaluation, figures, analysis summaries | Triggered by "run a scan", "make an exclusion plot", "rerun analysis" |
 
-| Agent | Role |
-| --- | --- |
-| [`hep-orchestrator`](./.claude/agents/hep-orchestrator.md) | Coordinates model-first projects, project status, skill dispatch, `manifest.json`, and prerequisite checks |
-| [`repro-orchestrator`](./.claude/agents/repro-orchestrator.md) | Coordinates paper reproduction requests, `literature/` artifacts, immutable reproduction runs, and `compare_to_reference.py` |
+| Agent | Role | Key entry point |
+| --- | --- | --- |
+| [`hep-orchestrator`](./.claude/agents/hep-orchestrator.md) | Coordinates model-first projects, project status, skill dispatch, `manifest.json`, and prerequisite checks | Triggered by "start a new project", "run the full pipeline", "continue my project", "project status" |
+| [`repro-orchestrator`](./.claude/agents/repro-orchestrator.md) | Coordinates paper reproduction requests, `literature/` artifacts, immutable reproduction runs, and `compare_to_reference.py` | Triggered by "reproduce paper", "replicate Fig.", "arXiv paper", "reproduction status" |
 
 Codex-format agent definitions live under [`.codex/agents/`](./.codex/agents/).
 Skill definitions are mirrored under [`.claude/skills/`](./.claude/skills/) and
