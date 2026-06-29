@@ -41,6 +41,7 @@ git clone <repository-url>
 cd hep-workflow
 python3 -m venv .venv
 source .venv/bin/activate
+python3 -m pip install --upgrade pip
 python3 -m pip install -r requirements-dev.txt
 ```
 
@@ -52,7 +53,14 @@ python3 scripts/validate_workspace_projects.py
 python3 -m pytest -q
 ```
 
-If all three return exit code 0, your environment is ready.
+If all three return exit code 0, your checkout satisfies the repository's core
+schema, fixture, and test contracts.
+
+The end-to-end tests are gated because they may require `wolframscript`:
+
+```bash
+python3 -m pytest -q tests/e2e --run-e2e
+```
 
 ### 3. Explore an example project
 
@@ -83,15 +91,39 @@ Codex-format agent definitions live under [`.codex/agents/`](./.codex/agents/).
 Skill definitions are mirrored under [`.claude/skills/`](./.claude/skills/) and
 [`.agents/skills/`](./.agents/skills/); mirror invariants are contract-tested.
 
+### Using these definitions with Codex or Claude
+
+This repository does not provide a standalone command-line runner for agents or
+skills. Use the definitions from an agent-capable environment:
+
+- **Claude Code**: open this repository as the working directory. Claude Code
+  reads `CLAUDE.md`, [`.claude/agents/`](./.claude/agents/), and
+  [`.claude/skills/`](./.claude/skills/).
+- **Codex**: open this repository as the working directory. Codex reads
+  `AGENTS.md`, [`.codex/agents/`](./.codex/agents/), and
+  [`.agents/skills/`](./.agents/skills/).
+
+Then ask for a workflow in natural language, for example:
+
+```text
+start a new project
+run package-scribe on task-001
+run numerics
+reproduce Fig. 3 of an arXiv paper
+```
+
+The orchestrator agents decide which skill to dispatch and validate the
+workspace artifacts they produce.
+
 ## Workspace project layout
 
 ```text
 workspace/projects/<project-name>/
-|-- manifest.json              # project state and history
+|-- manifest.json              # project state, history, and artifact index
 |-- idea/                      # research proposal artifacts
 |-- model/                     # model spec, calc tasks, benchmarks
 |-- constraints/               # experimental constraint data
-|-- calculations/task-XXX/     # symbolic and Python results per task
+|-- calculations/task-001/     # symbolic and Python results per task
 |-- literature/                # optional paper reproduction inputs
 |-- reproduction/              # optional immutable comparison outputs
 `-- numerics/
@@ -110,6 +142,9 @@ requirements live in [CONTRIBUTING.md](./CONTRIBUTING.md).
 ## Contracts
 
 The load-bearing contracts live under [docs/contracts/](./docs/contracts/).
+JSON Schemas define machine-validated artifact shapes. The Markdown contracts
+capture repository-level invariants that are not fully expressible as schemas,
+such as mirror invariants, source-of-truth order, and honest reproduction rules.
 When documentation disagrees, fix top-down from schemas and contracts rather
 than treating README prose as the source of truth.
 
@@ -120,8 +155,8 @@ than treating README prose as the source of truth.
 - **For contributors**: see [CONTRIBUTING.md](./CONTRIBUTING.md) for
   development setup, test discipline, and how to add new skills, tests, or
   history actions.
-- **For agents reading this repository**: see [AGENTS.md](./AGENTS.md) for
-  change discipline.
+- **For agents reading this repository**: see [AGENTS.md](./AGENTS.md) or
+  [CLAUDE.md](./CLAUDE.md); they are kept byte-identical.
 
 ## License
 
