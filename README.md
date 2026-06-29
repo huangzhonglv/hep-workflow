@@ -37,7 +37,7 @@ Use Python 3.11 or newer. A virtual environment is recommended; mixed system
 scientific Python environments can fail for reasons unrelated to this project.
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/huangzhonglv/hep-workflow.git
 cd hep-workflow
 python3 -m venv .venv
 source .venv/bin/activate
@@ -157,6 +157,10 @@ than treating README prose as the source of truth.
   history actions.
 - **For agents reading this repository**: see [AGENTS.md](./AGENTS.md) or
   [CLAUDE.md](./CLAUDE.md); they are kept byte-identical.
+
+## Acknowledgements
+
+We thank Chia-Wei Liu, Yu-Qi Xiao, and Xin-Yuan Gao for helpful discussions.
 
 ## License
 
