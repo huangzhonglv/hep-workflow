@@ -17,7 +17,16 @@ from tests.unit.compare_reference_fixtures import load_result, make_compare_proj
         "expected_issue_state",
     ),
     [
-        ("loop", 1, "package_x_derived", True, "pass", "pass", "independent", None),
+        (
+            "loop",
+            1,
+            "package_x_derived",
+            True,
+            "needs_human_review",
+            "needs_human_review",
+            "unknown",
+            "unknown",
+        ),
         (
             "tree",
             0,
@@ -44,19 +53,9 @@ from tests.unit.compare_reference_fixtures import load_result, make_compare_proj
             "literature_formula_imported",
             True,
             "needs_human_review",
-            "needs_human_review",
+            "blocked",
             "tainted",
             "tainted",
-        ),
-        (
-            "loop",
-            1,
-            "package_x_derived",
-            False,
-            "needs_human_review",
-            "needs_human_review",
-            "unknown",
-            "unknown",
         ),
     ],
 )
@@ -91,3 +90,16 @@ def test_verdict_ceiling_cases(
         assert target_result["provenance_issues"] == []
     else:
         assert target_result["provenance_issues"][0]["state"] == expected_issue_state
+
+
+def test_missing_calculation_result_is_a_readiness_failure_not_a_ceiling_case(
+    repo_root,
+    tmp_path,
+) -> None:
+    project_dir = make_compare_project(tmp_path, include_result_meta=False)
+
+    result = run_compare(repo_root, project_dir, "run-001")
+
+    assert result.returncode == 1
+    assert '"code": "calculation_result_missing"' in result.stderr
+    assert not (project_dir / "reproduction" / "runs" / "run-001").exists()

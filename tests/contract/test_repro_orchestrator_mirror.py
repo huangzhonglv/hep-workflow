@@ -72,12 +72,60 @@ def test_repro_orchestrator_forbidden_and_dispatch_sections_mirrored(
         "Step 1",
         "Step 7",
         "Pre-numerics gate",
-        "target_will_be_blocked",
+        "check_reproduction_readiness.py",
+        "workflow_state=routable",
         "scripts/compare_to_reference.py",
+        "`literature=missing|invalid|stale`",
+        "`model=missing|invalid|stale`",
+        "`calculations=missing|invalid|stale`",
+        "`numerics=missing|invalid|stale`",
+        "`numerics=blocked`",
+        "`not_applicable`",
+        "A nonzero exit, malformed JSON, or schema-invalid report fails closed",
+        "Do not pass --blocked-targets in new workflows",
+        "formula targets report calculations=not_applicable",
     ]
 
     for text in [claude, codex]:
         for snippet in required_forbidden:
             assert snippet in text
+        normalized = " ".join(text.split())
         for snippet in required_dispatch:
-            assert snippet in text
+            assert snippet in normalized
+
+
+def test_repro_orchestrator_manifest_writer_boundaries(repo_root: Path) -> None:
+    claude = _claude_body(repo_root / ".claude" / "agents" / "repro-orchestrator.md")
+    codex = tomllib.loads(
+        (repo_root / ".codex" / "agents" / "repro-orchestrator.toml").read_text(
+            encoding="utf-8"
+        )
+    )["developer_instructions"]
+
+    required = [
+        "`hep-paper-formalize` authors `literature_*` history entries in its private foundation candidate",
+        "`finalize_foundation_attempt.py` validates and publishes that event",
+        "candidate existence is not completion",
+        "`compare_to_reference.py` writes `reproduction_run_complete`",
+        "`repro-orchestrator` never writes `manifest.json` directly",
+        "The manifest is deliberately last",
+        "`hep-numerics` `_manifest.py` helper remains scoped to numerics",
+        "`python3 scripts/validate_workspace_projects.py <project-name>`",
+    ]
+
+    for text in (claude, codex):
+        normalized = " ".join(text.split())
+        for snippet in required:
+            assert snippet in normalized
+        assert "`scripts/_manifest.py`" not in normalized
+        assert "extend the helper" not in normalized
+
+    contract = " ".join(
+        (
+            repo_root / "docs" / "contracts" / "skill-agent-division.md"
+        ).read_text(encoding="utf-8").split()
+    )
+    assert "**Skill** may author skill-owned manifest fields" in contract
+    assert "**Agent** owns orchestration decisions" in contract
+    assert "`compare_to_reference.py` owns `reproduction_run_complete`" in contract
+    assert "`repro-orchestrator` validates that publication" in contract

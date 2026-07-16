@@ -32,7 +32,7 @@ def test_validate_scan_config_rejects_latex_parameter_name(
         ],
         "fixed_parameters": [],
         "observables": [
-            {"observable": "Br_mu_to_egamma", "source": {"type": "custom", "function": "dummy"}}
+            {"observable": "Br_mu_to_egamma", "source": {"type": "custom", "function": "dummy", "canonical_unit": "dimensionless"}}
         ],
         "constraints_used": [],
         "figures": [

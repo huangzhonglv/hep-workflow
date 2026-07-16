@@ -64,6 +64,7 @@
       "source": {
         "type": "custom",
         "function": "m_eff_bb_type_ii",
+        "canonical_unit": "eV",
         "note": "PMNS + Majorana phases; see custom_observables.py"
       }
     }
@@ -92,6 +93,9 @@
       "observables": [
         "Br_mu_to_egamma"
       ],
+      "fixed": {
+        "v_Delta": 0.001
+      },
       "overlay_constraint_bands": true
     }
   ],

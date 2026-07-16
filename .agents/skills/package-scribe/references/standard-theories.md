@@ -353,8 +353,8 @@ LDot[p1, p2] -> m^2 - LDot[q, q]/2    (* common for equal-mass on-shell vertices
 - Fermion charge is denoted `Q_f`
 - Third component of weak isospin is denoted `T_3^f`
 - For **overall signs and field definitions in the SM electroweak sector**, this
-  file uses the repository-root `SM-FeynmanRules.pdf` as the canonical
-  convention. Accordingly, it uses the mass-eigenstate definitions
+  file defines the canonical local convention. It uses the mass-eigenstate
+  definitions
   `W^\[PlusMinus] = (W^1 \mp i W^2)/\sqrt{2}`,
   `A = - s_W W^3 + c_W B`, and
   `Z = c_W W^3 + s_W B`
@@ -654,11 +654,10 @@ examples, prefer directly reusing the matching section of `tutorial-examples.md`
 
 ---
 
-## Appendix: Alignment With `SM-FeynmanRules.pdf` Conventions
+## Appendix: Electroweak Convention Summary
 
-The Standard Model electroweak rules in §3 of this file are currently explicit
-about matching the repository-root `SM-FeynmanRules.pdf`. For Package-scribe
-this means:
+The Standard Model electroweak rules in §3 use the following locally documented
+field and sign conventions:
 
 - `A_\[Mu] \bar f f` uses `-i e Q_f \gamma^\mu`
 - `Wff'` uses `+i (g/\sqrt{2}) \gamma^\mu P_L`

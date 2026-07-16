@@ -19,7 +19,6 @@ PROJECT_SUBDIRECTORIES = (
     "numerics",
     "numerics/scan-results",
     "numerics/figures",
-    "paper",
     "literature",
     "literature/digitized",
     "literature/style",

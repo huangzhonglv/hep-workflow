@@ -16,7 +16,7 @@
 | Decide dispatch order and read the manifest to choose the next skill | Agent |
 | File existence / format validation (mechanical) | Script |
 
-## Manifest Write Authority (Key Boundary, Aligned With Current `hep-numerics` Practice)
+## Manifest Write Authority
 
 `manifest.json` is **not** private agent data; it is the source of truth for
 workspace state. All three layers may read it, but write authority is divided
@@ -24,15 +24,32 @@ as follows:
 
 - **Script** may write the manifest only through contract-bound helper APIs (for
   example
-  `.claude/skills/hep-numerics/scripts/_manifest.py:update_manifest_for_numerics`),
+  `.claude/skills/hep-numerics/scripts/_manifest.py:build_manifest_for_numerics`),
   and only for fields that are mechanically derivable, such as new artifact file
   lists, scan metadata pointers, and fixed-template history entry fields. This is
   the existing pattern implemented by `run_scan.py` / `make_figures.py`.
-- **Agent** owns orchestration decisions: deciding when to dispatch which skill /
-  script, which history action to use, and how to resolve cross-skill dependency
-  and staleness issues.
-- **Skill** usually does not write the manifest directly; skills either call a
-  script helper or return results for the agent to write.
+- **Skill** may author skill-owned manifest fields and history entries only in
+  a private candidate when that candidate is part of the skill's documented
+  output contract. `hep-idea` and `hep-paper-formalize` follow this pattern.
+  They preserve unrelated fields and prior history; the contract-bound
+  foundation finalizer validates and transactionally publishes the candidate.
+- **Agent** owns orchestration decisions. It must not directly edit state that
+  can be derived mechanically from an owned publication. In particular,
+  `repro-orchestrator` verifies but never writes reproduction state;
+  `compare_to_reference.py` owns that manifest projection. Likewise,
+  `hep-orchestrator` verifies Package-Scribe completion but does not perform a
+  second calculation manifest merge; `finalize_package_result.py` owns it.
+- **Script** also owns conservative state invalidation implied by a publication.
+  In particular, the foundation finalizer derives `calculations.status =
+  "stale"` for changed load-bearing model/task/benchmark inputs and derives the
+  affected numerics projection. Skills and agents must not author these stale
+  transitions in their candidates or repair them after publication.
+
+Writer ownership is narrow: a skill or agent must not update another layer's
+owned artifact state merely because it can edit the shared manifest. Candidate
+writes use structured JSON handling, append each history event exactly once,
+and must pass their contract-bound finalizer before success is reported. No
+skill or agent may copy a candidate into live paths itself.
 
 ## Anti-Patterns
 
@@ -47,9 +64,12 @@ as follows:
 
 ```
 User
- ↓
-Agent  ──(Skill tool)──► Skill  ──(Bash tool)──► Script  ──► files / manifest helper
-         (Bash tool)──► Script
+  |
+Agent --(Skill tool)--> Skill ----------------> private candidate + owned event intent
+  |                      |
+  |                      +--(Bash tool)------> Script --> transactional publication
+  +----(Bash tool)---------------------------> Script
+  +------------------------------------------> routing decisions (read-only state)
 ```
 
 An agent may call a script directly (bypassing a skill) if and only if:
@@ -59,7 +79,25 @@ An agent may call a script directly (bypassing a skill) if and only if:
 ## Exceptions And Existing Practice
 
 The `hep-numerics` skill calls `run_scan.py` / `make_figures.py` through the Bash
-tool, and those scripts write the manifest through helpers in `_manifest.py`.
-This is the standard example for this rule. When a new script needs to write the
-manifest, reuse the helper pattern instead of letting each script hand-assemble
-history entry strings.
+tool, and those scripts write numerics state through helpers in `_manifest.py`.
+This remains the standard pattern for script-written manifest state. When a new
+script needs to write the manifest, reuse a contract-bound helper instead of
+letting each script hand-assemble history entry strings.
+
+`hep-idea` and `hep-paper-formalize` write their skill-owned artifact entries
+only into candidates allocated by `init_foundation_attempt.py`.
+`finalize_foundation_attempt.py` enforces owner/mode scope and publishes those
+artifact files plus the manifest as one generation. `hep-paper-formalize` owns
+the content of `literature_*` history actions; the finalizer publishes the
+event without inventing a second action.
+`compare_to_reference.py` owns `reproduction_run_complete` and publishes the
+immutable run, figures, and manifest projection in one transaction with the
+manifest last. `repro-orchestrator` validates that publication and never edits
+the manifest directly. `reproduction_run_failed` remains reserved until a
+mechanical failure recorder has a contract-bound publication path.
+
+Package-Scribe generates a complete batch candidate in an owned attempt.
+`finalize_package_result.py` mechanically validates that candidate and owns the
+task-scoped `calc_task_*_(complete|revised)` event, publishing the task tree and
+manifest in one transaction with the manifest last. The LLM skill does not edit
+the canonical task directory or manifest piecemeal.

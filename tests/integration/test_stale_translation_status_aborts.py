@@ -21,7 +21,7 @@ def test_stale_translation_status_aborts(
         translation_status="partial",
         parameter_specs=[
             {"canonical_name": "M_Hpp", "role": "scan", "unit": "GeV"},
-            {"canonical_name": "v_Delta", "role": "fixed", "unit": "GeV"},
+            {"canonical_name": "v_Delta", "role": "scan", "unit": "GeV"},
         ],
     )
 

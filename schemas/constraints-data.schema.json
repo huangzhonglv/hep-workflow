@@ -14,7 +14,7 @@
     },
     "model_version": {
       "type": "string",
-      "pattern": "^v\\d+$"
+      "pattern": "^v[0-9]+$"
     },
     "parameters": {
       "type": "array",
@@ -32,16 +32,36 @@
   "$defs": {
     "canonical_name": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9_]+$"
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+      "not": {
+        "enum": [
+          "False", "None", "True", "and", "as", "assert", "async", "await",
+          "break", "class", "continue", "def", "del", "elif", "else", "except",
+          "finally", "for", "from", "global", "if", "import", "in", "is",
+          "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try",
+          "while", "with", "yield"
+        ]
+      }
     },
     "parameter_range": {
       "type": "object",
       "required": [
         "unit"
       ],
+      "propertyNames": {
+        "anyOf": [
+          {
+            "const": "unit"
+          },
+          {
+            "$ref": "#/$defs/canonical_name"
+          }
+        ]
+      },
       "properties": {
         "unit": {
-          "type": "string"
+          "type": "string",
+          "pattern": "\\S"
         }
       },
       "additionalProperties": {
@@ -66,8 +86,10 @@
       "required": [
         "file",
         "x_parameter",
+        "x_column",
         "x_unit",
         "y_quantity",
+        "y_column",
         "y_unit",
         "method",
         "valid_range",
@@ -75,22 +97,36 @@
       ],
       "properties": {
         "file": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\)[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*\\.csv$"
         },
         "x_parameter": {
           "$ref": "#/$defs/canonical_name"
         },
+        "x_column": {
+          "$ref": "#/$defs/canonical_name"
+        },
         "x_unit": {
-          "type": "string"
+          "type": "string",
+          "pattern": "\\S"
         },
         "y_quantity": {
-          "type": "string"
+          "$ref": "#/$defs/canonical_name"
+        },
+        "y_column": {
+          "$ref": "#/$defs/canonical_name"
         },
         "y_unit": {
-          "type": "string"
+          "type": "string",
+          "pattern": "\\S"
         },
         "method": {
-          "type": "string"
+          "enum": [
+            "linear",
+            "loglog_linear",
+            "log_x_linear",
+            "log_y_linear"
+          ]
         },
         "valid_range": {
           "type": "array",
@@ -101,7 +137,10 @@
           }
         },
         "extrapolation_policy": {
-          "type": "string"
+          "enum": [
+            "forbidden",
+            "nearest"
+          ]
         }
       }
     },
@@ -120,7 +159,7 @@
             },
             "task_id": {
               "type": "string",
-              "pattern": "^task-\\d{3}$"
+              "pattern": "^task-[0-9]{3}$"
             }
           }
         },
@@ -140,7 +179,7 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "pattern": "^task-\\d{3}$"
+                "pattern": "^task-[0-9]{3}$"
               }
             },
             "derivation_note": {
@@ -197,7 +236,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^c-\\d{3}$"
+          "pattern": "^c-[0-9]{3}$"
         },
         "name": {
           "type": "string"
@@ -213,7 +252,7 @@
           ]
         },
         "observable": {
-          "type": "string"
+          "$ref": "#/$defs/canonical_name"
         },
         "central_value": {
           "type": "number"
@@ -248,7 +287,8 @@
           "$ref": "#/$defs/interpolation"
         },
         "unit": {
-          "type": "string"
+          "type": "string",
+          "pattern": "\\S"
         },
         "source": {
           "type": "string"
@@ -294,6 +334,9 @@
             }
           },
           "then": {
+            "required": [
+              "unit"
+            ],
             "anyOf": [
               {
                 "required": [

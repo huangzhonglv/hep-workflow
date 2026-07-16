@@ -62,6 +62,25 @@ def test_observable_source_without_valid_variant_is_rejected(repo_root: Path) ->
     assert any(list(error.absolute_path) == ["observables", 0, "source"] for error in errors)
 
 
+def test_custom_observable_requires_explicit_canonical_unit(repo_root: Path) -> None:
+    schema = load_json(repo_root / "schemas" / "scan-config.schema.json")
+    example = load_json(repo_root / "schemas" / "examples" / "scan-config.example.json")
+    candidate = copy.deepcopy(example)
+    custom = next(
+        item for item in candidate["observables"] if item["source"]["type"] == "custom"
+    )
+    custom["source"].pop("canonical_unit")
+
+    errors = list(Draft202012Validator(schema).iter_errors(candidate))
+
+    assert errors
+    assert any(
+        "canonical_unit" in nested.message
+        for error in errors
+        for nested in error.context
+    )
+
+
 def test_unknown_nested_scan_config_properties_are_rejected(repo_root: Path) -> None:
     schema = load_json(repo_root / "schemas" / "scan-config.schema.json")
     example = load_json(repo_root / "schemas" / "examples" / "scan-config.example.json")

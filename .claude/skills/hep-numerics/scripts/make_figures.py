@@ -11,9 +11,43 @@ import shutil
 import sys
 import tempfile
 import textwrap
-from datetime import datetime
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from _strict_json import load_json as strict_load_json
+from _identity import (
+    figure_output_key,
+    validate_analysis_id,
+    validate_figure_output_keys,
+    validate_named_json_path,
+)
+from _dependency_graph import build_dependency_graph, sha256_file, verify_dependency_graph
+from _publication_transaction import (
+    PublicationTransaction,
+    TransactionCommittedCleanupError,
+    assert_no_active_transactions,
+    capture_identity,
+    publication_lock,
+)
+from _scan_artifact_validation import (
+    canonical_json_sha256,
+    figure_render_snapshot,
+    scan_execution_snapshot,
+    validate_figure_artifact_set,
+    validate_scan_artifact_pair,
+)
+from _workflow_dependencies import (
+    figure_dependency_specs,
+    scan_dependency_specs,
+    scan_producer_from_graph,
+    verify_frozen_scan_dependency_graph,
+)
 
 _CACHE_ROOT = Path(tempfile.gettempdir()) / "hep-numerics-mpl-cache"
 _CACHE_ROOT.mkdir(parents=True, exist_ok=True)
@@ -116,7 +150,7 @@ def resolve_repo_root() -> Path:
 def load_json(path: Path) -> Any:
     """Load JSON from disk."""
 
-    return json.loads(path.read_text(encoding="utf-8"))
+    return strict_load_json(path)
 
 
 def find_project_dir(start: Path) -> Path:
@@ -167,22 +201,34 @@ def resolve_cli_inputs(args: argparse.Namespace) -> tuple[Path, Path, str]:
     """Resolve the project directory, scan-config path, and analysis ID."""
 
     if args.scan_config is not None:
-        scan_config_path = args.scan_config.resolve()
+        scan_config_path = args.scan_config.absolute()
         project_dir = find_project_dir(scan_config_path.parent)
         scan_config = load_json(scan_config_path)
         analysis_id = scan_config.get("analysis_id")
-        if not isinstance(analysis_id, str) or not analysis_id:
+        if not isinstance(analysis_id, str):
             raise ValueError(
                 f"scan-config at {scan_config_path} does not contain a valid analysis_id"
             )
+        analysis_id = validate_analysis_id(analysis_id)
+        scan_config_path = validate_named_json_path(
+            scan_config_path,
+            project_dir / "numerics" / "scan-configs",
+            analysis_id,
+            "scan-config",
+        )
         return project_dir, scan_config_path, analysis_id
 
     if args.project_dir is None:
         raise ValueError("--project-dir is required when using --analysis-id")
 
     project_dir = args.project_dir.resolve()
-    analysis_id = args.analysis_id
-    scan_config_path = project_dir / "numerics" / "scan-configs" / f"{analysis_id}.json"
+    analysis_id = validate_analysis_id(args.analysis_id)
+    scan_config_path = validate_named_json_path(
+        project_dir / "numerics" / "scan-configs" / f"{analysis_id}.json",
+        project_dir / "numerics" / "scan-configs",
+        analysis_id,
+        "scan-config",
+    )
     return project_dir, scan_config_path, analysis_id
 
 
@@ -235,20 +281,33 @@ def load_inputs(
             raise ValueError(
                 "load_inputs requires either scan_config_path or both project_dir and analysis_id"
             )
+        analysis_id = validate_analysis_id(analysis_id)
         scan_config_path = (
             project_dir.resolve() / "numerics" / "scan-configs" / f"{analysis_id}.json"
         )
     else:
-        scan_config_path = scan_config_path.resolve()
+        scan_config_path = scan_config_path.absolute()
 
     if project_dir is None:
         project_dir = find_project_dir(scan_config_path.parent)
     else:
         project_dir = project_dir.resolve()
+    assert_no_active_transactions(project_dir)
 
     scan_config = load_json(scan_config_path)
-    if analysis_id is None:
-        analysis_id = scan_config["analysis_id"]
+    payload_analysis_id = validate_analysis_id(scan_config.get("analysis_id"))
+    if analysis_id is not None and payload_analysis_id != analysis_id:
+        raise ValueError(
+            f"scan-config analysis_id {payload_analysis_id!r} does not match "
+            f"requested analysis_id {analysis_id!r}"
+        )
+    analysis_id = payload_analysis_id
+    scan_config_path = validate_named_json_path(
+        scan_config_path,
+        project_dir / "numerics" / "scan-configs",
+        analysis_id,
+        "scan-config",
+    )
 
     scan_csv_path = project_dir / "numerics" / "scan-results" / analysis_id / "scan.csv"
     if not scan_csv_path.exists():
@@ -264,10 +323,66 @@ def load_inputs(
     constraints_data = load_json(constraints_path)
     manifest = load_json(manifest_path)
     scan_meta = load_json(scan_meta_path)
+    scan_snapshot = scan_meta.get("scan_config_snapshot")
+    if not isinstance(scan_snapshot, dict):
+        raise ValueError("scan.meta.json lacks an immutable scan_config_snapshot")
+    scan_config_source = scan_meta.get("scan_config_source")
+    if not isinstance(scan_config_source, str) or not scan_config_source:
+        raise ValueError("scan.meta.json lacks exact scan_config_source provenance")
+    repo_root = resolve_repo_root()
+    artifact_issues = validate_scan_artifact_pair(
+        project_dir,
+        analysis_id,
+        scan_config_path,
+        repo_root,
+    )
+    if artifact_issues:
+        raise ValueError(
+            "scan artifact pair is not valid for figure generation: "
+            + "; ".join(artifact_issues)
+        )
+    producer_script = scan_producer_from_graph(
+        scan_meta.get("input_provenance", {}),
+        repo_root,
+    )
+    expected_dependencies = scan_dependency_specs(
+        project_dir,
+        repo_root,
+        scan_config_path,
+        scan_snapshot,
+        producer_script=producer_script,
+    )
+    provenance_issues = verify_frozen_scan_dependency_graph(
+        scan_meta.get("input_provenance"),
+        project_dir,
+        repo_root,
+        expected_dependencies,
+        scan_config_source=scan_config_source,
+        required_roles={"scan-config", "scan-runner", "constraints-data"},
+    )
+    if provenance_issues:
+        raise ValueError(
+            "scan input provenance is stale or incomplete: "
+            + "; ".join(provenance_issues)
+        )
+    scan_meta_sha256 = sha256_file(scan_meta_path)
+    figure_dependencies = figure_dependency_specs(
+        project_dir,
+        repo_root,
+        scan_config_path=scan_config_path,
+        scan_csv_path=scan_csv_path,
+        scan_meta_path=scan_meta_path,
+        renderer_script=Path(__file__),
+    )
+    figure_input_provenance = build_dependency_graph(
+        project_dir,
+        repo_root,
+        figure_dependencies,
+    )
     dataframe = pd.read_csv(scan_csv_path)
 
-    return {
-        "repo_root": resolve_repo_root(),
+    inputs = {
+        "repo_root": repo_root,
         "project_dir": project_dir,
         "analysis_id": analysis_id,
         "manifest_path": manifest_path,
@@ -277,6 +392,10 @@ def load_inputs(
         "scan_csv_path": scan_csv_path,
         "scan_meta_path": scan_meta_path,
         "scan_meta": scan_meta,
+        "scan_meta_sha256": scan_meta_sha256,
+        "dependency_specs": expected_dependencies,
+        "figure_dependency_specs": figure_dependencies,
+        "figure_input_provenance": figure_input_provenance,
         "dataframe": dataframe,
         "model_spec": model_spec,
         "constraints_data": constraints_data,
@@ -287,6 +406,69 @@ def load_inputs(
             constraint["id"]: constraint for constraint in constraints_data.get("constraints", [])
         },
     }
+    verify_replot_inputs(inputs, "post-load verification")
+    return inputs
+
+
+def verify_replot_inputs(inputs: dict[str, Any], context: str) -> None:
+    """Revalidate the exact scan snapshot and dependencies before publication."""
+
+    issues: list[str] = []
+    try:
+        current_meta_sha256 = sha256_file(inputs["scan_meta_path"])
+    except ValueError as exc:
+        issues.append(str(exc))
+    else:
+        if current_meta_sha256 != inputs["scan_meta_sha256"]:
+            issues.append("scan.meta.json exact bytes changed after figure preflight")
+
+    issues.extend(
+        validate_scan_artifact_pair(
+            inputs["project_dir"],
+            inputs["analysis_id"],
+            inputs["scan_config_path"],
+            inputs["repo_root"],
+        )
+    )
+    issues.extend(
+        verify_frozen_scan_dependency_graph(
+            inputs["scan_meta"].get("input_provenance"),
+            inputs["project_dir"],
+            inputs["repo_root"],
+            inputs["dependency_specs"],
+            scan_config_source=inputs["scan_meta"].get("scan_config_source", ""),
+            required_roles={"scan-config", "scan-runner", "constraints-data"},
+        )
+    )
+    issues.extend(
+        verify_dependency_graph(
+            inputs["figure_input_provenance"],
+            inputs["project_dir"],
+            inputs["repo_root"],
+            expected_specs=inputs["figure_dependency_specs"],
+            required_roles={
+                "figure-scan-config",
+                "figure-scan-csv",
+                "figure-scan-meta",
+                "figure-renderer",
+            },
+        )
+    )
+
+    try:
+        manifest = load_json(inputs["manifest_path"])
+    except (OSError, ValueError) as exc:
+        issues.append(f"cannot reload manifest.json: {exc}")
+    else:
+        depends_on = inputs["scan_config"].get("depends_on", {})
+        model_artifact = manifest.get("artifacts", {}).get("model", {})
+        if manifest.get("active_model_version") != depends_on.get("model_version"):
+            issues.append("manifest active_model_version changed after figure preflight")
+        if model_artifact.get("checksum") != depends_on.get("model_checksum"):
+            issues.append("manifest model checksum changed after figure preflight")
+
+    if issues:
+        raise ValueError(f"{context}: " + "; ".join(issues))
 
 
 def get_parameter_scale(scan_config: dict[str, Any], name: str) -> str | None:
@@ -296,12 +478,6 @@ def get_parameter_scale(scan_config: dict[str, Any], name: str) -> str | None:
         if parameter["canonical_name"] == name:
             return parameter.get("scale")
     return None
-
-
-def sanitize_name(name: str) -> str:
-    """Convert a logical identifier into a filesystem-friendly fragment."""
-
-    return name.replace("/", "-").replace(" ", "_")
 
 
 def tex_escape(text: str) -> str:
@@ -415,6 +591,32 @@ def iso_timestamp_to_ns(value: str | None) -> int:
     return int(parsed.timestamp() * 1_000_000_000)
 
 
+def prior_figure_generation_matches_scan(inputs: dict[str, Any]) -> bool | None:
+    """Return whether a sidecar binds the current scan, or None for legacy state."""
+
+    meta_path = (
+        inputs["project_dir"]
+        / "numerics"
+        / "figures"
+        / inputs["analysis_id"]
+        / "figures.meta.json"
+    )
+    if not meta_path.is_file():
+        return None
+    try:
+        metadata = load_json(meta_path)
+        current_csv = sha256_file(inputs["scan_csv_path"])
+        current_meta = sha256_file(inputs["scan_meta_path"])
+    except (OSError, ValueError):
+        return None
+    if not isinstance(metadata, dict):
+        return None
+    return (
+        metadata.get("scan_csv_sha256") == current_csv
+        and metadata.get("scan_meta_sha256") == current_meta
+    )
+
+
 def determine_manifest_history_action(inputs: dict[str, Any]) -> str | None:
     """Choose the manifest history action for this figure generation pass."""
 
@@ -441,6 +643,11 @@ def determine_manifest_history_action(inputs: dict[str, Any]) -> str | None:
         latest_mtime_ns(scan_output_paths),
     )
 
+    sidecar_match = prior_figure_generation_matches_scan(inputs)
+    if sidecar_match is True:
+        return "numerics_figures_regenerated"
+    if sidecar_match is False:
+        return None if has_history_action(str(scan_action)) else str(scan_action)
     if prior_figure_latest_mtime_ns == 0:
         return None if has_history_action(str(scan_action)) else str(scan_action)
     if scan_outputs_mtime_ns > prior_figure_latest_mtime_ns:
@@ -451,6 +658,9 @@ def determine_manifest_history_action(inputs: dict[str, Any]) -> str | None:
 def scan_outputs_are_newer_than_figures(inputs: dict[str, Any]) -> bool:
     """Return whether figures should be refreshed after a newer scan run."""
 
+    sidecar_match = prior_figure_generation_matches_scan(inputs)
+    if sidecar_match is not None:
+        return not sidecar_match
     prior_figure_latest_mtime_ns = int(inputs.get("prior_figure_latest_mtime_ns", 0))
     if prior_figure_latest_mtime_ns == 0:
         return False
@@ -496,6 +706,45 @@ def draw_constraint_band(ax: Any, constraint: dict[str, Any], color: str) -> Lin
     return Line2D([0], [0], color=color, linestyle="--", label=label)
 
 
+def exact_figure_slice(
+    inputs: dict[str, Any],
+    figure_spec: dict[str, Any],
+    active_axes: set[str],
+) -> pd.DataFrame:
+    """Select one exact slice; never aggregate or drop hidden scan dimensions."""
+
+    scan_axes = {
+        str(item["canonical_name"])
+        for item in inputs["scan_config"].get("scan_parameters", [])
+    }
+    if not active_axes <= scan_axes:
+        raise ValueError(
+            "figure axes must be declared scan_parameters: "
+            + ",".join(sorted(active_axes - scan_axes))
+        )
+    hidden_axes = scan_axes - active_axes
+    fixed = figure_spec.get("fixed", {})
+    if not isinstance(fixed, dict) or set(fixed) != hidden_axes:
+        raise ValueError(
+            "figure must explicitly fix every hidden scan parameter exactly; expected: "
+            + ",".join(sorted(hidden_axes))
+        )
+    dataframe = inputs["dataframe"].copy()
+    for name, value in sorted(fixed.items()):
+        if name not in dataframe.columns:
+            raise ValueError(f"scan.csv is missing hidden slice column {name}")
+        numeric = pd.to_numeric(dataframe[name], errors="coerce").to_numpy(
+            dtype=float,
+            na_value=np.nan,
+        )
+        if not np.isfinite(numeric).all():
+            raise ValueError(f"hidden slice column {name} contains non-finite data")
+        dataframe = dataframe[numeric == float(value)]
+    if dataframe.empty:
+        raise ValueError("declared exact figure slice selects no scan rows")
+    return dataframe
+
+
 def render_exclusion_2d(
     inputs: dict[str, Any],
     figure_spec: dict[str, Any],
@@ -518,7 +767,20 @@ def render_exclusion_2d(
             "paths": [],
         }
 
-    subset = dataframe[required_columns].drop_duplicates(subset=[x_name, y_name])
+    try:
+        dataframe = exact_figure_slice(inputs, figure_spec, {x_name, y_name})
+    except ValueError as exc:
+        return {"status": "FAIL", "details": [str(exc)], "paths": []}
+
+    subset = dataframe[required_columns]
+    if subset.duplicated(subset=[x_name, y_name], keep=False).any():
+        return {
+            "status": "FAIL",
+            "details": [
+                "scan.csv has duplicate coordinates on the declared exact figure slice"
+            ],
+            "paths": [],
+        }
     x_values = np.sort(subset[x_name].unique())
     y_values = np.sort(subset[y_name].unique())
     expected_points = len(x_values) * len(y_values)
@@ -630,7 +892,7 @@ def render_exclusion_2d(
         ax.legend(handles=legend_handles, loc="best")
     fig.tight_layout()
 
-    base_path = output_dir / f"exclusion-{sanitize_name(x_name)}-{sanitize_name(y_name)}"
+    base_path = output_dir / figure_output_key(figure_spec)
     if not overwrite and (base_path.with_suffix(".pdf").exists() or base_path.with_suffix(".png").exists()):
         plt.close(fig)
         return {
@@ -665,7 +927,20 @@ def render_scan_1d(
             "paths": [],
         }
 
-    grouped = dataframe[required_columns].groupby(x_name, as_index=False).median(numeric_only=True)
+    try:
+        dataframe = exact_figure_slice(inputs, figure_spec, {x_name})
+    except ValueError as exc:
+        return {"status": "FAIL", "details": [str(exc)], "paths": []}
+
+    grouped = dataframe[required_columns]
+    if grouped.duplicated(subset=[x_name], keep=False).any():
+        return {
+            "status": "FAIL",
+            "details": [
+                "scan.csv has duplicate x coordinates on the declared exact figure slice"
+            ],
+            "paths": [],
+        }
     grouped = grouped.sort_values(by=x_name)
 
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -702,8 +977,7 @@ def render_scan_1d(
         ax.legend(handles=legend_handles, loc="best")
     fig.tight_layout()
 
-    obs_fragment = "--".join(sanitize_name(observable) for observable in observables)
-    base_path = output_dir / f"scan1d-{sanitize_name(x_name)}-{obs_fragment}"
+    base_path = output_dir / figure_output_key(figure_spec)
     if not overwrite and (base_path.with_suffix(".pdf").exists() or base_path.with_suffix(".png").exists()):
         plt.close(fig)
         return {
@@ -717,11 +991,18 @@ def render_scan_1d(
     return {"status": "OK", "details": [], "paths": paths}
 
 
-def render_figures(inputs: dict[str, Any], *, overwrite: bool) -> tuple[list[dict[str, Any]], list[Path]]:
+def render_figures(
+    inputs: dict[str, Any],
+    *,
+    overwrite: bool,
+    output_dir: Path | None = None,
+) -> tuple[list[dict[str, Any]], list[Path]]:
     """Render all configured figures, continuing past per-figure failures."""
 
     analysis_id = inputs["analysis_id"]
-    output_dir = inputs["project_dir"] / "numerics" / "figures" / analysis_id
+    validate_figure_output_keys(inputs["scan_config"])
+    if output_dir is None:
+        output_dir = inputs["project_dir"] / "numerics" / "figures" / analysis_id
     output_dir.mkdir(parents=True, exist_ok=True)
 
     results: list[dict[str, Any]] = []
@@ -757,6 +1038,59 @@ def print_results(results: list[dict[str, Any]]) -> None:
             print(f"  - wrote {path}")
 
 
+def build_figure_meta(
+    inputs: dict[str, Any],
+    staged_paths: list[Path],
+    *,
+    generated_at: str,
+) -> dict[str, Any]:
+    """Build immutable provenance for exactly one rendered figure generation."""
+
+    analysis_id = inputs["analysis_id"]
+    outputs = [
+        {
+            "path": f"numerics/figures/{analysis_id}/{path.name}",
+            "sha256": sha256_file(path),
+        }
+        for path in sorted(staged_paths, key=lambda item: item.name)
+    ]
+    frozen_config = inputs["scan_meta"]["scan_config_snapshot"]
+    return {
+        "analysis_id": analysis_id,
+        "generated_at": generated_at,
+        "scan_csv_sha256": sha256_file(inputs["scan_csv_path"]),
+        "scan_meta_sha256": sha256_file(inputs["scan_meta_path"]),
+        "scan_execution_sha256": canonical_json_sha256(
+            scan_execution_snapshot(frozen_config)
+        ),
+        "render_config_snapshot": figure_render_snapshot(inputs["scan_config"]),
+        "renderer": {
+            "name": "hep-numerics/make_figures.py",
+            "contract_version": 1,
+        },
+        "outputs": outputs,
+        "input_provenance": inputs["figure_input_provenance"],
+    }
+
+
+def validate_figure_meta_schema(repo_root: Path, payload: dict[str, Any]) -> None:
+    """Reject a generated figure metadata object that misses its JSON contract."""
+
+    from jsonschema import Draft202012Validator
+
+    schema = load_json(repo_root / "schemas" / "figure-meta.schema.json")
+    errors = sorted(
+        Draft202012Validator(schema).iter_errors(payload),
+        key=lambda issue: list(issue.absolute_path),
+    )
+    if errors:
+        rendered = "; ".join(
+            f"{'.'.join(str(part) for part in issue.absolute_path) or '<root>'}: {issue.message}"
+            for issue in errors
+        )
+        raise ValueError(f"generated figures.meta.json failed schema validation: {rendered}")
+
+
 def main() -> int:
     """CLI entrypoint."""
 
@@ -766,56 +1100,232 @@ def main() -> int:
     try:
         project_dir, scan_config_path, analysis_id = resolve_cli_inputs(args)
         configure_matplotlib()
-        inputs = load_inputs(
-            project_dir=project_dir,
-            analysis_id=analysis_id,
-            scan_config_path=scan_config_path,
-        )
-        inputs["prior_figure_latest_mtime_ns"] = latest_mtime_ns(
-            collect_existing_figure_paths(project_dir, analysis_id)
-        )
-        overwrite = args.overwrite or scan_outputs_are_newer_than_figures(inputs)
-        results, generated_paths = render_figures(inputs, overwrite=overwrite)
+        with publication_lock(
+            project_dir,
+            "numerics",
+        ) as lock:
+            inputs = load_inputs(
+                project_dir=project_dir,
+                analysis_id=analysis_id,
+                scan_config_path=scan_config_path,
+            )
+            final_figure_dir = project_dir / "numerics" / "figures" / analysis_id
+            final_figure_meta_path = final_figure_dir / "figures.meta.json"
+            final_figure_dir.parent.mkdir(parents=True, exist_ok=True)
+            summary_path = (
+                project_dir / "numerics" / f"analysis-summary-{analysis_id}.md"
+            )
+            manifest_path = project_dir / "manifest.json"
+            inputs["manifest"] = load_json(manifest_path)
+            inputs["prior_figure_latest_mtime_ns"] = latest_mtime_ns(
+                collect_existing_figure_paths(project_dir, analysis_id)
+            )
+            overwrite = args.overwrite or scan_outputs_are_newer_than_figures(inputs)
+            expected_names = {
+                f"{key}.{suffix}"
+                for key in validate_figure_output_keys(inputs["scan_config"])
+                for suffix in ("pdf", "png")
+            }
+            if not overwrite:
+                existing = sorted(
+                    name for name in expected_names if (final_figure_dir / name).exists()
+                )
+                if existing:
+                    raise ValueError(
+                        "figure output already exists; rerun with --overwrite: "
+                        + ", ".join(existing)
+                    )
+
+            with PublicationTransaction.begin(
+                project_dir,
+                f"figures-{analysis_id}",
+                lock=lock,
+            ) as transaction:
+                figure_dir_before = capture_identity(final_figure_dir)
+                staged_dir = transaction.stage_path(
+                    f"numerics/figures/{analysis_id}"
+                )
+                staged_dir.mkdir(parents=True, exist_ok=True)
+                results, staged_paths = render_figures(
+                    inputs,
+                    overwrite=True,
+                    output_dir=staged_dir,
+                )
+                if any(result["status"] == "FAIL" for result in results):
+                    print_results(results)
+                    return 1
+                if not staged_paths:
+                    print_results(results)
+                    print("no figures were generated")
+                    return 1
+                if len({path.name for path in staged_paths}) != len(staged_paths):
+                    raise ValueError("staged figure outputs contain duplicate basenames")
+                generated_paths = [final_figure_dir / path.name for path in staged_paths]
+                verify_replot_inputs(inputs, "before summary staging")
+                history_action = determine_manifest_history_action(inputs)
+                timestamp = datetime.now(timezone.utc).replace(
+                    microsecond=0
+                ).isoformat().replace("+00:00", "Z")
+                figure_meta = build_figure_meta(
+                    inputs,
+                    staged_paths,
+                    generated_at=timestamp,
+                )
+                validate_figure_meta_schema(inputs["repo_root"], figure_meta)
+                staged_figure_meta_path = staged_dir / "figures.meta.json"
+                staged_figure_meta_path.write_text(
+                    json.dumps(figure_meta, indent=2) + "\n",
+                    encoding="utf-8",
+                )
+                figure_issues = validate_figure_artifact_set(
+                    project_dir,
+                    analysis_id,
+                    inputs["scan_config"],
+                    inputs["scan_meta"],
+                    figure_meta,
+                    figure_dir=staged_dir,
+                )
+                if figure_issues:
+                    raise ValueError(
+                        "staged figure generation failed provenance validation: "
+                        + "; ".join(figure_issues)
+                    )
+                summary_rows = (
+                    inputs["dataframe"]
+                    .where(pd.notnull(inputs["dataframe"]), None)
+                    .to_dict(orient="records")
+                )
+                summary_counts = RUN_SCAN.count_point_statuses(
+                    summary_rows,
+                    inputs["scan_config"].get("constraints_used", []),
+                )
+                staged_summary_path = transaction.stage_path(
+                    f"numerics/analysis-summary-{analysis_id}.md"
+                )
+                RUN_SCAN.write_analysis_summary(
+                    inputs,
+                    summary_rows,
+                    summary_counts,
+                    inputs["scan_csv_path"],
+                    generated_paths,
+                    output_path=staged_summary_path,
+                    meta_path=inputs["scan_meta_path"],
+                    published_csv_path=inputs["scan_csv_path"],
+                )
+
+                manifest_before = capture_identity(manifest_path)
+                current_manifest = MANIFEST.load_json(manifest_path)
+                manifest_candidate = MANIFEST.build_manifest_for_numerics(
+                    current_manifest,
+                    project_dir=project_dir,
+                    analysis_id=analysis_id,
+                    scan_config=inputs["scan_config"],
+                    constraints_by_id=inputs["constraints_by_id"],
+                    scan_config_path=inputs["scan_config_path"],
+                    scan_csv_path=inputs["scan_csv_path"],
+                    scan_meta_path=inputs["scan_meta_path"],
+                    analysis_summary_path=summary_path,
+                    custom_observables_path=(
+                        project_dir / "numerics" / "custom_observables.py"
+                    ),
+                    figure_paths=generated_paths,
+                    figure_evidence_paths=staged_paths,
+                    figure_meta_path=final_figure_meta_path,
+                    allow_unpublished_files=True,
+                    history_action=history_action,
+                    history_event_id=uuid.uuid4().hex,
+                    timestamp=timestamp,
+                )
+                RUN_SCAN.validate_manifest_candidate(inputs, manifest_candidate)
+                staged_manifest_path = transaction.stage_path("manifest.json")
+                MANIFEST._write_staged_manifest_candidate(
+                    staged_manifest_path,
+                    manifest_candidate,
+                )
+
+                transaction.add(
+                    staged_dir,
+                    final_figure_dir,
+                    mode="replace",
+                    expected_before=figure_dir_before,
+                )
+                transaction.add(
+                    staged_summary_path,
+                    summary_path,
+                    mode="replace",
+                    expected_before=capture_identity(summary_path),
+                )
+                transaction.add(
+                    staged_manifest_path,
+                    manifest_path,
+                    mode="replace",
+                    expected_before=manifest_before,
+                )
+
+                def validate_published_replot() -> None:
+                    verify_replot_inputs(inputs, "after transactional publication")
+                    missing = [
+                        path.name
+                        for path in generated_paths
+                        if not path.is_file() or path.stat().st_size == 0
+                    ]
+                    if missing:
+                        raise RuntimeError(
+                            "published figure outputs are missing/empty: "
+                            + ", ".join(sorted(missing))
+                        )
+                    published_figure_meta = load_json(final_figure_meta_path)
+                    validate_figure_meta_schema(
+                        inputs["repo_root"], published_figure_meta
+                    )
+                    figure_issues = validate_figure_artifact_set(
+                        project_dir,
+                        analysis_id,
+                        inputs["scan_config"],
+                        inputs["scan_meta"],
+                        published_figure_meta,
+                    )
+                    if figure_issues:
+                        raise RuntimeError(
+                            "published figure generation failed provenance validation: "
+                            + "; ".join(figure_issues)
+                        )
+                    if MANIFEST.load_json(manifest_path) != manifest_candidate:
+                        raise RuntimeError(
+                            "published manifest does not match the staged candidate"
+                        )
+
+                transaction.commit(
+                    validate_candidate=lambda: RUN_SCAN.validate_manifest_candidate(
+                        inputs,
+                        manifest_candidate,
+                    ),
+                    pre_publish_check=lambda: verify_replot_inputs(
+                        inputs,
+                        "transaction publication guard",
+                    ),
+                    post_publish_check=validate_published_replot,
+                )
+
+        published_by_name = {path.name: path for path in generated_paths}
+        for result in results:
+            result["paths"] = [published_by_name[path.name] for path in result["paths"]]
         print_results(results)
-        if any(result["status"] == "FAIL" for result in results):
-            return 1
-        if not generated_paths:
-            print("no figures were generated")
-            return 1
-        history_action = determine_manifest_history_action(inputs)
-        summary_rows = (
-            inputs["dataframe"].where(pd.notnull(inputs["dataframe"]), None).to_dict(orient="records")
-        )
-        summary_counts = RUN_SCAN.count_point_statuses(
-            summary_rows,
-            inputs["scan_config"].get("constraints_used", []),
-        )
-        summary_path = RUN_SCAN.write_analysis_summary(
-            inputs,
-            summary_rows,
-            summary_counts,
-            inputs["scan_csv_path"],
-            generated_paths,
-        )
         print(f"updated analysis summary: {summary_path}")
-        manifest_path = MANIFEST.update_manifest_for_numerics(
-            project_dir=inputs["project_dir"],
-            analysis_id=analysis_id,
-            scan_config=inputs["scan_config"],
-            constraints_by_id=inputs["constraints_by_id"],
-            scan_config_path=inputs["scan_config_path"],
-            scan_csv_path=inputs["scan_csv_path"],
-            scan_meta_path=inputs["scan_meta_path"],
-            analysis_summary_path=project_dir / "numerics" / f"analysis-summary-{analysis_id}.md",
-            custom_observables_path=project_dir / "numerics" / "custom_observables.py",
-            figure_paths=generated_paths,
-            history_action=history_action,
-        )
         if history_action is not None:
             print(f"history action: {history_action}")
         else:
             print("history action: none (manifest already updated by run_scan)")
         print(f"updated manifest: {manifest_path}")
+        return 0
+    except TransactionCommittedCleanupError as exc:
+        print(
+            "warning: publication committed successfully, but private cleanup "
+            f"is pending for transaction {exc.transaction_id}: {exc.cleanup_error}. "
+            "Do not retry this command; use recover_publication_transactions.py "
+            "for the same publication anchor.",
+            file=sys.stderr,
+        )
         return 0
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)

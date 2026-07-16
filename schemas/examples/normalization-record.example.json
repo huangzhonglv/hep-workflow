@@ -1,0 +1,37 @@
+{
+  "status": "canonical",
+  "method": "converted",
+  "source_data_file": "literature/digitized/fig-3a.raw.csv",
+  "canonical_data_file": "literature/digitized/fig-3a.csv",
+  "source_units": {
+    "M_Zp": "MeV",
+    "delta_a_mu": "dimensionless"
+  },
+  "canonical_units": {
+    "M_Zp": "GeV",
+    "delta_a_mu": "dimensionless"
+  },
+  "conversions": {
+    "M_Zp": {
+      "operation": "linear",
+      "factor": 0.001,
+      "offset": 0.0
+    },
+    "delta_a_mu": {
+      "operation": "linear",
+      "factor": 1.0,
+      "offset": 0.0
+    }
+  },
+  "fixed_parameters": {},
+  "acquisition": {
+    "source_type": "paper_figure",
+    "paper_id": "arxiv:2601.01234v2",
+    "source_locator": "arxiv:2601.01234v2#figure-3a",
+    "method": "manual_digitization",
+    "acquired_at": "2026-07-13T00:00:00Z",
+    "notes": "Raw digitizer export retained without unit rewriting."
+  },
+  "source_checksum": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "canonical_checksum": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+}

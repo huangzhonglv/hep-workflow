@@ -10,6 +10,7 @@ def test_validate_workspace_scan_config(
     ensure_task_result,
     read_json,
     write_json,
+    rebind_scan_result,
     repo_root,
 ) -> None:
     project_dir = project_copy_factory(tmp_path)
@@ -20,9 +21,10 @@ def test_validate_workspace_scan_config(
         function_name="compute_br_mu_to_egamma",
         parameter_specs=[
             {"canonical_name": "M_Hpp", "role": "scan", "unit": "GeV"},
-            {"canonical_name": "v_Delta", "role": "fixed", "unit": "GeV"},
+            {"canonical_name": "v_Delta", "role": "scan", "unit": "GeV"},
         ],
     )
+    rebind_scan_result(project_dir)
 
     manifest = read_json(project_dir / "manifest.json")
     valid_scan_config = {

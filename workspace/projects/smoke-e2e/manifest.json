@@ -1,4 +1,5 @@
 {
+  "manifest_version": 2,
   "project_name": "smoke-e2e",
   "created": "2026-04-22",
   "last_updated": "2026-05-09",
@@ -9,7 +10,7 @@
       "files": [
         "idea/proposal.md"
       ],
-      "produced_by": "codex",
+      "produced_by": "fixture_builder",
       "timestamp": "2026-04-22T00:00:00Z"
     },
     "model": {
@@ -21,7 +22,7 @@
         "model/benchmarks.json"
       ],
       "checksum": "sha256:c1f3ba396d020c60408998c90681fec754b76a36ba763088dd3285e58334fdd1",
-      "produced_by": "codex",
+      "produced_by": "fixture_builder",
       "timestamp": "2026-04-22T00:00:01Z"
     },
     "constraints": {
@@ -35,7 +36,7 @@
           "checksum": "sha256:c1f3ba396d020c60408998c90681fec754b76a36ba763088dd3285e58334fdd1"
         }
       },
-      "produced_by": "codex",
+      "produced_by": "fixture_builder",
       "timestamp": "2026-04-22T00:00:02Z"
     },
     "calculations": {
@@ -50,25 +51,12 @@
           "checksum": "sha256:c1f3ba396d020c60408998c90681fec754b76a36ba763088dd3285e58334fdd1"
         }
       },
-      "produced_by": "codex",
+      "produced_by": "fixture_builder",
       "timestamp": "2026-04-22T00:00:03Z"
     },
     "numerics": {
       "status": "not_started",
       "files": [],
-      "depends_on": {
-        "model": {
-          "version": null,
-          "checksum": null
-        },
-        "calculations": {
-          "tasks": [],
-          "model_version": null
-        },
-        "constraints": {
-          "checksum": null
-        }
-      },
       "analyses": [],
       "produced_by": null,
       "timestamp": null
@@ -79,7 +67,12 @@
         "literature/paper-meta.json",
         "literature/paper-extract.json",
         "literature/repro-targets.json",
+        "literature/digitized/target-001.raw.csv",
         "literature/digitized/target-001.csv",
+        "literature/digitized/target-001.normalization.json",
+        "literature/digitized/target-002.raw.csv",
+        "literature/digitized/target-002.csv",
+        "literature/digitized/target-002.normalization.json",
         "literature/style/paper-style.mplstyle",
         "literature/repro-summary.md"
       ],
@@ -109,22 +102,22 @@
     {
       "action": "idea_complete",
       "timestamp": "2026-04-22T00:00:00Z",
-      "by": "codex"
+      "by": "fixture_builder"
     },
     {
       "action": "model_complete_v1",
       "timestamp": "2026-04-22T00:00:01Z",
-      "by": "codex"
+      "by": "fixture_builder"
     },
     {
       "action": "constraints_complete",
       "timestamp": "2026-04-22T00:00:02Z",
-      "by": "codex"
+      "by": "fixture_builder"
     },
     {
       "action": "calc_task_task-001_complete",
       "timestamp": "2026-04-22T00:00:03Z",
-      "by": "codex"
+      "by": "fixture_builder"
     },
     {
       "action": "literature_complete",

@@ -1,0 +1,31 @@
+{
+  "status": "canonical",
+  "method": "identity",
+  "source_data_file": "literature/digitized/target-002.raw.csv",
+  "canonical_data_file": "literature/digitized/target-002.csv",
+  "source_units": {
+    "M_Hpp": "GeV",
+    "v_Delta": "GeV",
+    "BR_toy": "dimensionless"
+  },
+  "canonical_units": {
+    "M_Hpp": "GeV",
+    "v_Delta": "GeV",
+    "BR_toy": "dimensionless"
+  },
+  "conversions": {
+    "M_Hpp": {"operation": "linear", "factor": 1.0, "offset": 0.0},
+    "v_Delta": {"operation": "linear", "factor": 1.0, "offset": 0.0},
+    "BR_toy": {"operation": "linear", "factor": 1.0, "offset": 0.0}
+  },
+  "fixed_parameters": {},
+  "acquisition": {
+    "source_type": "synthetic_fixture",
+    "paper_id": "arxiv:2605.00001v1",
+    "source_locator": "smoke-e2e synthetic target-002 benchmark",
+    "method": "synthetic_fixture",
+    "acquired_at": "2026-05-09T00:00:00Z"
+  },
+  "source_checksum": "sha256:ca5cec386991a219f78350da4842864ec066d805bcf1abf48b0927924123a075",
+  "canonical_checksum": "sha256:ca5cec386991a219f78350da4842864ec066d805bcf1abf48b0927924123a075"
+}

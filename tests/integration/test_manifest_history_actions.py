@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
+import time
 
 
 def test_manifest_history_actions_distinguish_full_rerun_and_replot(
@@ -23,14 +25,14 @@ def test_manifest_history_actions_distinguish_full_rerun_and_replot(
 from __future__ import annotations
 
 
-def compute_br_mu_to_egamma(*, M_Hpp: float, v_Delta: float = 1.0e-3, **kwargs) -> float:
+def compute_br_mu_to_egamma(*, M_Hpp: float, v_Delta: float = 1.0e-3) -> float:
     safe_mass = max(float(M_Hpp), 1.0)
     return float(5.0e-13 * (100.0 / safe_mass) ** 2 * (1.0 + 100.0 * float(v_Delta)))
 """.strip()
         + "\n",
         parameter_specs=[
             {"canonical_name": "M_Hpp", "role": "scan", "unit": "GeV"},
-            {"canonical_name": "v_Delta", "role": "fixed", "unit": "GeV"},
+            {"canonical_name": "v_Delta", "role": "scan", "unit": "GeV"},
         ],
     )
 
@@ -106,6 +108,16 @@ def compute_br_mu_to_egamma(*, M_Hpp: float, v_Delta: float = 1.0e-3, **kwargs) 
     manifest = read_json(project_dir / "manifest.json")
     assert manifest["history"][-1]["action"] == "numerics_analysis_complete"
     assert len(manifest["history"]) == history_length_after_run
+
+    future_ns = time.time_ns() + 60_000_000_000
+    for path in (
+        project_dir / "numerics" / "figures" / "analysis-201"
+    ).glob("*.pdf"):
+        os.utime(path, ns=(future_ns, future_ns))
+    for path in (
+        project_dir / "numerics" / "figures" / "analysis-201"
+    ).glob("*.png"):
+        os.utime(path, ns=(future_ns, future_ns))
 
     rerun_result = subprocess.run(
         [

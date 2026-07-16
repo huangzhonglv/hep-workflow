@@ -18,23 +18,59 @@
     "package_x_methods",
     "provenance_notes",
     "benchmark_status",
-    "depends_on"
+    "depends_on",
+    "input_provenance"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "calculation_provenance": {
+            "const": "package_x_derived"
+          }
+        },
+        "required": [
+          "calculation_provenance"
+        ]
+      },
+      "then": {
+        "required": [
+          "derivation_evidence"
+        ],
+        "properties": {
+          "package_x_methods": {
+            "minItems": 1
+          }
+        }
+      },
+      "else": {
+        "not": {
+          "required": [
+            "derivation_evidence"
+          ]
+        },
+        "properties": {
+          "package_x_methods": {
+            "maxItems": 0
+          }
+        }
+      }
+    }
   ],
   "properties": {
     "task_id": {
       "type": "string",
-      "pattern": "^task-\\d{3}$"
+      "pattern": "^task-[0-9]{3}$"
     },
     "observable": {
-      "type": "string"
+      "$ref": "#/$defs/canonical_name"
     },
     "python_function": {
-      "type": "string",
-      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+      "$ref": "#/$defs/canonical_name"
     },
     "python_file": {
       "type": "string",
-      "pattern": ".*\\.py$"
+      "pattern": "^[A-Za-z_][A-Za-z0-9_-]*\\.py$"
     },
     "parameters": {
       "type": "array",
@@ -58,7 +94,7 @@
     },
     "source_wl": {
       "type": "string",
-      "pattern": ".*\\.wl$"
+      "pattern": "^[A-Za-z_][A-Za-z0-9_-]*\\.wl$"
     },
     "calculation_provenance": {
       "type": "string",
@@ -79,6 +115,9 @@
         "pattern": "^[A-Za-z0-9_]+$"
       }
     },
+    "derivation_evidence": {
+      "$ref": "#/$defs/derivation_evidence"
+    },
     "provenance_notes": {
       "type": "string"
     },
@@ -93,6 +132,9 @@
     },
     "depends_on": {
       "$ref": "#/$defs/depends_on"
+    },
+    "input_provenance": {
+      "$ref": "#/$defs/dependency_graph"
     },
     "reproduces_paper": {
       "type": "object",
@@ -114,7 +156,59 @@
   "$defs": {
     "canonical_name": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9_]+$"
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+      "not": {
+        "enum": [
+          "False", "None", "True", "and", "as", "assert", "async", "await",
+          "break", "class", "continue", "def", "del", "elif", "else", "except",
+          "finally", "for", "from", "global", "if", "import", "in", "is",
+          "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try",
+          "while", "with", "yield"
+        ]
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "derivation_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_wl_sha256",
+        "python_file_sha256",
+        "wolfram_result_symbol",
+        "observable",
+        "python_function",
+        "package_x_methods"
+      ],
+      "properties": {
+        "source_wl_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "python_file_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "wolfram_result_symbol": {
+          "type": "string",
+          "pattern": "^[A-Za-z$][A-Za-z0-9_$]*$"
+        },
+        "observable": {
+          "$ref": "#/$defs/canonical_name"
+        },
+        "python_function": {
+          "$ref": "#/$defs/canonical_name"
+        },
+        "package_x_methods": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_]+$"
+          }
+        }
+      }
     },
     "parameter": {
       "type": "object",
@@ -137,7 +231,8 @@
           ]
         },
         "unit": {
-          "type": "string"
+          "type": "string",
+          "pattern": "\\S"
         }
       }
     },
@@ -151,10 +246,11 @@
       ],
       "properties": {
         "name": {
-          "type": "string"
+          "$ref": "#/$defs/canonical_name"
         },
         "unit": {
-          "type": "string"
+          "type": "string",
+          "pattern": "\\S"
         },
         "description": {
           "type": "string"
@@ -180,7 +276,132 @@
             "string",
             "null"
           ],
-          "pattern": "^(sha256:.+)?$"
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
+    "dependency_graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "verification_status"
+      ],
+      "properties": {
+        "version": {
+          "const": "sha256-bytes-v1"
+        },
+        "verification_status": {
+          "enum": [
+            "verified",
+            "legacy-unverified"
+          ]
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/dependency_entry"
+          }
+        },
+        "root_sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "reason": {
+          "type": "string",
+          "pattern": "\\S"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "verification_status": {
+              "const": "verified"
+            }
+          },
+          "required": [
+            "entries",
+            "root_sha256"
+          ],
+          "not": {
+            "required": [
+              "reason"
+            ]
+          }
+        },
+        {
+          "properties": {
+            "verification_status": {
+              "const": "legacy-unverified"
+            }
+          },
+          "required": [
+            "reason"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "entries"
+                ]
+              },
+              {
+                "required": [
+                  "root_sha256"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "dependency_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope",
+        "role",
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "scope": {
+          "enum": [
+            "project",
+            "repository"
+          ]
+        },
+        "role": {
+          "type": "string",
+          "pattern": "^[^\\s]+$"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "allOf": [
+            {
+              "pattern": "^[^/\\\\]+(?:/[^/\\\\]+)*$"
+            },
+            {
+              "not": {
+                "pattern": "(^|/)\\.\\.?(/|$)"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[A-Za-z]:/"
+              }
+            },
+            {
+              "not": {
+                "pattern": "\u0000"
+              }
+            }
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256"
         }
       }
     }

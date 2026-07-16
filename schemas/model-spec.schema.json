@@ -19,7 +19,7 @@
     },
     "version": {
       "type": "string",
-      "pattern": "^v\\d+$"
+      "pattern": "^v[0-9]+$"
     },
     "gauge_symmetry": {
       "type": "string"
@@ -67,7 +67,16 @@
   "$defs": {
     "canonical_name": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9_]+$"
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+      "not": {
+        "enum": [
+          "False", "None", "True", "and", "as", "assert", "async", "await",
+          "break", "class", "continue", "def", "del", "elif", "else", "except",
+          "finally", "for", "from", "global", "if", "import", "in", "is",
+          "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try",
+          "while", "with", "yield"
+        ]
+      }
     },
     "field": {
       "type": "object",
@@ -145,7 +154,8 @@
           "type": "string"
         },
         "unit": {
-          "type": "string"
+          "type": "string",
+          "pattern": "\\S"
         },
         "suggested_range": {
           "anyOf": [
@@ -253,7 +263,7 @@
       "properties": {
         "id": {
           "type": "string",
-          "pattern": "^int-\\d{3}$"
+          "pattern": "^int-[0-9]{3}$"
         },
         "latex": {
           "type": "string"

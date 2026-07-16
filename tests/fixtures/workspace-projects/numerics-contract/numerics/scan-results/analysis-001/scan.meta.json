@@ -7,7 +7,7 @@
     "description": "Synthetic precomputed scan for validator contract tests.",
     "depends_on": {
       "model_version": "v1",
-      "model_checksum": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "model_checksum": "sha256:e73be36cb0f1fd01d2544109e7976fbb10fcbe4ff576476a908282a0ac7d7fe8",
       "task_ids": [
         "task-001"
       ]
@@ -52,7 +52,7 @@
     "parallelism": 1
   },
   "model_version": "v1",
-  "model_checksum": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+  "model_checksum": "sha256:e73be36cb0f1fd01d2544109e7976fbb10fcbe4ff576476a908282a0ac7d7fe8",
   "seed": 0,
   "started_at": "2026-06-23T00:00:00Z",
   "finished_at": "2026-06-23T00:00:01Z",
@@ -79,5 +79,152 @@
   ],
   "warnings": [
     "synthetic fixture with formula fallback enabled"
-  ]
+  ],
+  "scan_csv_sha256": "sha256:33eeb41328ba14eab75632d842db9ce8eb995dd1785218e5e9daa7559ca03c78",
+  "input_provenance": {
+    "version": "sha256-bytes-v1",
+    "verification_status": "verified",
+    "entries": [
+      {
+        "scope": "project",
+        "role": "task-001-result-meta",
+        "path": "calculations/task-001/result-meta.json",
+        "sha256": "sha256:aed36e25109d761d450b0dc3d79e456a24285811602f1da1abaad75759701a7a"
+      },
+      {
+        "scope": "project",
+        "role": "task-001-result-python",
+        "path": "calculations/task-001/result-python.py",
+        "sha256": "sha256:e416c661b00dd29ff899bb4e755152c31aa17161a11f2f5e43d84958725dc2ff"
+      },
+      {
+        "scope": "project",
+        "role": "task-001-result-wl",
+        "path": "calculations/task-001/result.wl",
+        "sha256": "sha256:ff9c94611a0a856b24c27040a637cd87208fa25b70e79791f2c5e6b9b48c6b11"
+      },
+      {
+        "scope": "project",
+        "role": "constraints-data",
+        "path": "constraints/constraints-data.json",
+        "sha256": "sha256:e7a517760f146e133194bbcbbd7d17cee714df778355456784141b6f6d0137b5"
+      },
+      {
+        "scope": "project",
+        "role": "calc-tasks",
+        "path": "model/calc-tasks.json",
+        "sha256": "sha256:2a29be66f21cd3dfda166a5a1384b0f9635115ff9714f4930c70614fa210f8f8"
+      },
+      {
+        "scope": "project",
+        "role": "model-spec",
+        "path": "model/model-spec.json",
+        "sha256": "sha256:e73be36cb0f1fd01d2544109e7976fbb10fcbe4ff576476a908282a0ac7d7fe8"
+      },
+      {
+        "scope": "project",
+        "role": "scan-config",
+        "path": "numerics/scan-configs/analysis-001.json",
+        "sha256": "sha256:40a870b3e1946d910ef5718aa6fd433f5e8f4a1ec7019263187810020a86e2b6"
+      },
+      {
+        "scope": "repository",
+        "role": "custom-observables-helper",
+        "path": ".agents/skills/hep-numerics/scripts/_custom_observables.py",
+        "sha256": "sha256:056723e260e88499fb77f9cc56995062e1c7c29042b61b32a46862d0645ecf35"
+      },
+      {
+        "scope": "repository",
+        "role": "dependency-graph-helper",
+        "path": ".agents/skills/hep-numerics/scripts/_dependency_graph.py",
+        "sha256": "sha256:fcd72666fb9800fbb8fa9ab32cdde62e0f57c48bd0d622f8215ee336da836cdc"
+      },
+      {
+        "scope": "repository",
+        "role": "identity-helper",
+        "path": ".agents/skills/hep-numerics/scripts/_identity.py",
+        "sha256": "sha256:1bc7b83937b52db2fa961b6572db70f6ce86ba7ccdb3880949b49042ab1be3ce"
+      },
+      {
+        "scope": "repository",
+        "role": "manifest-helper",
+        "path": ".agents/skills/hep-numerics/scripts/_manifest.py",
+        "sha256": "sha256:d5bbb176d602ef201935f1502b99ef20f22fb5bf2f061026c047460d347ff98a"
+      },
+      {
+        "scope": "repository",
+        "role": "publication-transaction-helper",
+        "path": ".agents/skills/hep-numerics/scripts/_publication_transaction.py",
+        "sha256": "sha256:45b4cfeba7f1797fd1010a71bbee9ed70b5004f3e8ece276ecd3a0ada3bd5755"
+      },
+      {
+        "scope": "repository",
+        "role": "scan-artifact-validator",
+        "path": ".agents/skills/hep-numerics/scripts/_scan_artifact_validation.py",
+        "sha256": "sha256:2409eda4b324111133527997bf2e2d310366d81f96af3fa7bef2ddf47e816b12"
+      },
+      {
+        "scope": "repository",
+        "role": "strict-json-helper",
+        "path": ".agents/skills/hep-numerics/scripts/_strict_json.py",
+        "sha256": "sha256:3db56b7e39ce7e7ad1ac3c012b814d3aa486079af1520de33586cdbfd3cca96c"
+      },
+      {
+        "scope": "repository",
+        "role": "workflow-dependency-helper",
+        "path": ".agents/skills/hep-numerics/scripts/_workflow_dependencies.py",
+        "sha256": "sha256:1d31057c5f30aaf799268edff61f875e2b4fecd29ad2e263385062377cdbe2a2"
+      },
+      {
+        "scope": "repository",
+        "role": "scan-runner",
+        "path": ".agents/skills/hep-numerics/scripts/run_scan.py",
+        "sha256": "sha256:5862daf316562937201d526f2ceab5619cf0a0623fca5b67e4b9d0ce8b80cfae"
+      },
+      {
+        "scope": "repository",
+        "role": "constraints-schema",
+        "path": "schemas/constraints-data.schema.json",
+        "sha256": "sha256:08f5abb05f88965c1b4f22ad40df4795d2aad1bd9b60836ef651bcedf944387a"
+      },
+      {
+        "scope": "repository",
+        "role": "model-spec-schema",
+        "path": "schemas/model-spec.schema.json",
+        "sha256": "sha256:4e06552e0b383af53786285929de5208a92db0f8964fa0a239042f8240805b27"
+      },
+      {
+        "scope": "repository",
+        "role": "result-meta-schema",
+        "path": "schemas/result-meta.schema.json",
+        "sha256": "sha256:736026e1478c1ff5392b9296836495d85dc48bf2dde9f10ca73ac403bf9ec4f0"
+      },
+      {
+        "scope": "repository",
+        "role": "scan-config-schema",
+        "path": "schemas/scan-config.schema.json",
+        "sha256": "sha256:1c7fe7cca7f71f69f801624d107c6a40247b3cac5f16d49005fd3dc62901b5d0"
+      },
+      {
+        "scope": "repository",
+        "role": "scan-meta-schema",
+        "path": "schemas/scan-meta.schema.json",
+        "sha256": "sha256:ec4949d144b19b70a568f015299519e9d1b998d7b2d0f612241c63d11af5b058"
+      }
+    ],
+    "root_sha256": "sha256:a7afe53a92644a704a6dbf1ec18f86534db7ea0660c1dfb7752cf84ca6615639"
+  },
+  "scan_config_source": "{\n  \"analysis_id\": \"analysis-001\",\n  \"model_name\": \"Toy Numerics Contract Model\",\n  \"description\": \"Synthetic precomputed scan for validator contract tests.\",\n  \"depends_on\": {\n    \"model_version\": \"v1\",\n    \"model_checksum\": \"sha256:e73be36cb0f1fd01d2544109e7976fbb10fcbe4ff576476a908282a0ac7d7fe8\",\n    \"task_ids\": [\n      \"task-001\"\n    ]\n  },\n  \"scan_parameters\": [\n    {\n      \"canonical_name\": \"M_Hpp\",\n      \"range\": [\n        100.0,\n        200.0\n      ],\n      \"grid\": 2,\n      \"scale\": \"linear\"\n    }\n  ],\n  \"fixed_parameters\": [\n    {\n      \"canonical_name\": \"v_Delta\",\n      \"value\": 0.001\n    },\n    {\n      \"canonical_name\": \"m_lightest\",\n      \"value\": 0.01\n    }\n  ],\n  \"observables\": [\n    {\n      \"observable\": \"Br_mu_to_egamma\",\n      \"source\": {\n        \"type\": \"task\",\n        \"task_id\": \"task-001\"\n      }\n    }\n  ],\n  \"constraints_used\": [\n    \"c-005\",\n    \"c-006\"\n  ],\n  \"figures\": [],\n  \"allow_formula_fallback\": true,\n  \"seed\": 0,\n  \"parallelism\": 1\n}\n",
+  "scan_config_sha256": "sha256:40a870b3e1946d910ef5718aa6fd433f5e8f4a1ec7019263187810020a86e2b6",
+  "rng": {
+    "algorithm": "numpy.random.PCG64",
+    "algorithm_version": "pcg64-v1",
+    "substream_scheme": "numpy-seedsequence-v1",
+    "seed": 0,
+    "substreams": {
+      "smoke": 0,
+      "scan": 1
+    },
+    "consumers": []
+  }
 }

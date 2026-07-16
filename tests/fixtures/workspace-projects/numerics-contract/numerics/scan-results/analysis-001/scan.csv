@@ -1,3 +1,3 @@
-M_Hpp,v_Delta,m_lightest,Br_mu_to_egamma,c-005_verdict,c-005_margin,c-005_chi2,c-005_skip_reason,c-006_verdict,c-006_margin,c-006_chi2,c-006_skip_reason,point_status,warnings
-100.0,0.001,0.01,1.1e-13,allowed,0.9,, ,allowed,0.9,, ,allowed,
-200.0,0.001,0.01,2.75e-14,allowed,0.8,, ,allowed,0.8,, ,allowed,
+M_Hpp,v_Delta,m_lightest,Br_mu_to_egamma,c-005_verdict,c-005_margin,c-005_chi2,c-005_skip_reason,c-006_verdict,c-006_margin,c-006_chi2,c-006_skip_reason
+100.0,0.001,0.01,1.1e-13,allowed,0.9,,,allowed,0.9,,
+200.0,0.001,0.01,2.75e-14,allowed,0.8,,,allowed,0.8,,

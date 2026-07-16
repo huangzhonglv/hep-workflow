@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 
@@ -17,10 +18,13 @@ def _validate_reproduction_result(repo_root: Path, payload: dict) -> None:
 
 
 def _assert_pair_exists(project_dir: Path, pair: dict[str, str]) -> None:
-    for relpath in pair.values():
+    for extension in ("pdf", "png"):
+        relpath = pair[extension]
         path = project_dir / relpath
         assert path.exists(), f"missing reproduction figure: {path}"
         assert path.stat().st_size > 0, f"empty reproduction figure: {path}"
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        assert pair[f"{extension}_sha256"] == f"sha256:{digest}"
 
 
 @pytest.mark.e2e
@@ -29,6 +33,7 @@ def test_smoke_repro_compare_after_scan(
     scan_config_factory,
     run_cli,
     run_scan_script: Path,
+    make_figures_script: Path,
     repo_root: Path,
 ) -> None:
     project_dir = smoke_e2e_project
@@ -38,6 +43,15 @@ def test_smoke_repro_compare_after_scan(
     run_cli(
         [
             run_scan_script,
+            "--project-dir",
+            project_dir,
+            "--analysis-id",
+            analysis_id,
+        ]
+    )
+    run_cli(
+        [
+            make_figures_script,
             "--project-dir",
             project_dir,
             "--analysis-id",
@@ -54,8 +68,6 @@ def test_smoke_repro_compare_after_scan(
             analysis_id,
             "--repro-id",
             "run-001",
-            "--blocked-targets",
-            "target-002",
         ]
     )
 
@@ -74,12 +86,18 @@ def test_smoke_repro_compare_after_scan(
     non_blocked = by_target["target-001"]
     blocked = by_target["target-002"]
 
+    for result in (non_blocked, blocked):
+        assert result["reference_evidence"] == "synthetic"
+        assert result["verdict_ceiling"] == "needs_human_review"
+        assert any(
+            warning.startswith("synthetic_reference_evidence")
+            for warning in result["warnings"]
+        )
+
     for pair in non_blocked["generated_files"].values():
         _assert_pair_exists(project_dir, pair)
+    assert set(blocked["generated_files"]) == {"overlay"}
     _assert_pair_exists(project_dir, blocked["generated_files"]["overlay"])
-    for key in ["side_by_side", "residual"]:
-        for relpath in blocked["generated_files"][key].values():
-            assert not (project_dir / relpath).exists()
 
     assert blocked["verdict"] == "blocked"
     assert payload["run_summary"]["n_targets_blocked"] == 1
@@ -87,4 +105,5 @@ def test_smoke_repro_compare_after_scan(
     manifest = json.loads((project_dir / "manifest.json").read_text(encoding="utf-8"))
     actions = [entry["action"] for entry in manifest["history"]]
     assert "literature_complete" in actions
-    assert "reproduction_run_complete" not in actions
+    assert actions.count("reproduction_run_complete") == 1
+    assert manifest["artifacts"]["reproduction"]["runs"] == ["run-001"]

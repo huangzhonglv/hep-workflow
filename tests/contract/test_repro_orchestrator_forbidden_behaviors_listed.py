@@ -11,7 +11,7 @@ REQUIRED_FORBIDDEN_BEHAVIORS = [
     "Using subjective hedging language",
     "Deciding the final verdict for the user when verdict is `needs_human_review`",
     "Auto-loosening provenance check",
-    "Claiming reproduction success when `derivation_independence` is `tainted`, `independent_manual`, or `unknown`",
+    "Claiming reproduction success unless derivation is `independent`, reference evidence is `independent_snapshot`, comparison evidence is `machine_verifiable`, and the fixed metric verdict is `pass`",
 ]
 
 

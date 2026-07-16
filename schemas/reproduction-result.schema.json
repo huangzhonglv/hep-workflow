@@ -9,13 +9,14 @@
     "started_at",
     "finished_at",
     "depends_on",
+    "input_provenance",
     "run_summary",
     "results"
   ],
   "properties": {
     "repro_id": {
       "type": "string",
-      "pattern": "^run-\\d{3}$"
+      "pattern": "^run-[0-9]{3}$"
     },
     "paper_id": {
       "type": "string",
@@ -29,6 +30,9 @@
     },
     "depends_on": {
       "$ref": "#/$defs/depends_on"
+    },
+    "input_provenance": {
+      "$ref": "#/$defs/dependency_graph"
     },
     "run_summary": {
       "$ref": "#/$defs/run_summary"
@@ -50,14 +54,14 @@
   "$defs": {
     "timestamp": {
       "type": "string",
-      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
     },
     "checksum": {
       "type": [
         "string",
         "null"
       ],
-      "pattern": "^(sha256:.+)?$"
+      "pattern": "^sha256:[0-9a-f]{64}$"
     },
     "target_id": {
       "type": "string",
@@ -65,15 +69,17 @@
     },
     "task_id": {
       "type": "string",
-      "pattern": "^task-\\d{3}$"
+      "pattern": "^task-[0-9]{3}$"
     },
     "target_kind": {
       "type": "string",
       "enum": [
         "formula",
         "benchmark_point",
+        "keyed_benchmark_set",
         "scan_table",
         "figure_curve",
+        "parametric_curve",
         "exclusion_region"
       ]
     },
@@ -99,13 +105,15 @@
           "enum": [
             "relative",
             "absolute",
+            "normalized_distance",
             "qualitative"
           ]
         },
         "value": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "number",
+              "minimum": 0
             },
             {
               "type": "string"
@@ -122,25 +130,30 @@
       "additionalProperties": false,
       "required": [
         "pdf",
-        "png"
+        "pdf_sha256",
+        "png",
+        "png_sha256"
       ],
       "properties": {
         "pdf": {
           "type": "string"
         },
+        "pdf_sha256": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
         "png": {
           "type": "string"
+        },
+        "png_sha256": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
         }
       }
     },
     "generated_files": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "overlay",
-        "side_by_side",
-        "residual"
-      ],
       "properties": {
         "overlay": {
           "$ref": "#/$defs/file_pair"
@@ -154,21 +167,132 @@
       }
     },
     "metric_value": {
-      "anyOf": [
-        {
-          "type": "number"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "type": "string"
-        },
-        {
+      "type": "number"
+    },
+    "comparison_completeness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "complete",
+        "match_columns",
+        "reference_rows",
+        "matched_reference_rows",
+        "missing_reference_rows",
+        "row_coverage",
+        "observables_expected",
+        "observables_compared",
+        "expected_values",
+        "compared_values",
+        "value_coverage",
+        "blocking_reasons"
+      ],
+      "properties": {
+        "complete": {
           "type": "boolean"
         },
+        "match_columns": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "reference_rows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "matched_reference_rows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "missing_reference_rows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "row_coverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "observables_expected": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "observables_compared": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "expected_values": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "compared_values": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "value_coverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "blocking_reasons": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "allOf": [
         {
-          "type": "null"
+          "if": {
+            "properties": {
+              "complete": {
+                "const": true
+              }
+            },
+            "required": [
+              "complete"
+            ]
+          },
+          "then": {
+            "properties": {
+              "blocking_reasons": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "complete": {
+                "const": false
+              }
+            },
+            "required": [
+              "complete"
+            ]
+          },
+          "then": {
+            "properties": {
+              "blocking_reasons": {
+                "minItems": 1
+              }
+            }
+          }
         }
       ]
     },
@@ -186,6 +310,12 @@
         "interpolation_method": {
           "type": "string"
         },
+        "geometry_method": {
+          "type": "string"
+        },
+        "completeness": {
+          "$ref": "#/$defs/comparison_completeness"
+        },
         "metrics": {
           "type": "object",
           "propertyNames": {
@@ -201,13 +331,57 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "task_id",
         "state",
         "reason"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "reason": {
+                "const": "observable_task_unmatched"
+              }
+            },
+            "required": [
+              "reason"
+            ]
+          },
+          "then": {
+            "required": [
+              "observable"
+            ]
+          },
+          "else": {
+            "if": {
+              "properties": {
+                "reason": {
+                  "enum": [
+                    "reference_independence_unverified",
+                    "boundary_provenance_unverified",
+                    "synthetic_reference_evidence",
+                    "formula_reference_only"
+                  ]
+                }
+              },
+              "required": [
+                "reason"
+              ]
+            },
+            "else": {
+              "required": [
+                "task_id"
+              ]
+            }
+          }
+        }
       ],
       "properties": {
         "task_id": {
           "$ref": "#/$defs/task_id"
+        },
+        "observable": {
+          "type": "string",
+          "minLength": 1
         },
         "state": {
           "type": "string",
@@ -225,6 +399,18 @@
             "benchmark_used_as_input",
             "unsupported_manual_loop",
             "result_meta_missing",
+            "result_meta_schema_invalid",
+            "derivation_artifacts_unverified",
+            "observable_task_unmatched",
+            "task_not_in_catalog",
+            "benchmark_validation_failed",
+            "benchmark_validation_skipped",
+            "derivation_evidence_not_runtime_verified",
+            "input_provenance_unverified",
+            "reference_independence_unverified",
+            "boundary_provenance_unverified",
+            "synthetic_reference_evidence",
+            "formula_reference_only",
             "provenance_blocked"
           ]
         }
@@ -237,6 +423,8 @@
         "target_id",
         "tasks_used",
         "derivation_independence",
+        "reference_evidence",
+        "comparison_evidence",
         "provenance_issues",
         "comparison",
         "tolerance",
@@ -246,12 +434,459 @@
         "warnings",
         "notes"
       ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "comparison": {
+                "properties": {
+                  "kind": {"const": "formula"}
+                },
+                "required": ["kind"]
+              }
+            },
+            "required": ["comparison"]
+          },
+          "then": {
+            "properties": {
+              "tolerance": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["kind", "value"],
+                "properties": {
+                  "kind": {"const": "qualitative"},
+                  "value": {"type": ["string", "null"]}
+                }
+              },
+              "reference_evidence": {"const": "unverified"},
+              "comparison_evidence": {"const": "requires_human_review"},
+              "verdict_ceiling": {"const": "needs_human_review"},
+              "generated_files": {"maxProperties": 0},
+              "comparison": {
+                "properties": {
+                  "metrics": {"maxProperties": 0}
+                },
+                "not": {
+                  "anyOf": [
+                    {"required": ["interpolation_method"]},
+                    {"required": ["completeness"]},
+                    {"required": ["geometry_method"]}
+                  ]
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "tolerance": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["kind", "value"],
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": ["relative", "absolute", "normalized_distance"]
+                  },
+                  "value": {"type": "number", "minimum": 0}
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "comparison": {
+                "properties": {
+                  "kind": {
+                    "enum": ["parametric_curve", "exclusion_region"]
+                  }
+                },
+                "required": ["kind"]
+              }
+            },
+            "required": ["comparison"]
+          },
+          "then": {
+            "properties": {
+              "tolerance": {
+                "properties": {
+                  "kind": {"const": "normalized_distance"}
+                }
+              }
+            }
+          },
+          "else": {
+            "if": {
+              "properties": {
+                "comparison": {
+                  "properties": {
+                    "kind": {"not": {"const": "formula"}}
+                  },
+                  "required": ["kind"]
+                }
+              },
+              "required": ["comparison"]
+            },
+            "then": {
+              "properties": {
+                "tolerance": {
+                  "properties": {
+                    "kind": {"enum": ["relative", "absolute"]}
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "comparison": {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "scan_table",
+                      "keyed_benchmark_set"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              }
+            },
+            "required": [
+              "comparison"
+            ]
+          },
+          "then": {
+            "properties": {
+              "comparison": {
+                "required": [
+                  "completeness"
+                ],
+                "not": {
+                  "anyOf": [
+                    {"required": ["interpolation_method"]},
+                    {"required": ["geometry_method"]}
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "comparison": {
+                "properties": {
+                  "kind": {"const": "figure_curve"}
+                },
+                "required": ["kind"]
+              }
+            },
+            "required": ["comparison"]
+          },
+          "then": {
+            "properties": {
+              "comparison": {
+                "required": ["interpolation_method"],
+                "properties": {
+                  "interpolation_method": {
+                    "const": "piecewise_linear_union_knots"
+                  }
+                },
+                "not": {
+                  "anyOf": [
+                    {"required": ["completeness"]},
+                    {"required": ["geometry_method"]}
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "comparison": {
+                "properties": {
+                  "kind": {"const": "parametric_curve"}
+                },
+                "required": ["kind"]
+              }
+            },
+            "required": ["comparison"]
+          },
+          "then": {
+            "properties": {
+              "comparison": {
+                "required": ["geometry_method"],
+                "properties": {
+                  "geometry_method": {
+                    "const": "normalized_continuous_polyline_hausdorff"
+                  }
+                },
+                "not": {
+                  "anyOf": [
+                    {"required": ["interpolation_method"]},
+                    {"required": ["completeness"]}
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "comparison": {
+                "properties": {
+                  "kind": {
+                    "enum": ["benchmark_point", "exclusion_region"]
+                  }
+                },
+                "required": ["kind"]
+              }
+            },
+            "required": ["comparison"]
+          },
+          "then": {
+            "properties": {
+              "comparison": {
+                "not": {
+                  "anyOf": [
+                    {"required": ["interpolation_method"]},
+                    {"required": ["completeness"]},
+                    {"required": ["geometry_method"]}
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "comparison": {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "scan_table",
+                      "keyed_benchmark_set"
+                    ]
+                  }
+                },
+                "required": [
+                  "kind"
+                ]
+              },
+              "verdict": {
+                "enum": [
+                  "pass",
+                  "fail"
+                ]
+              }
+            },
+            "required": [
+              "comparison",
+              "verdict"
+            ]
+          },
+          "then": {
+            "properties": {
+              "comparison": {
+                "required": [
+                  "completeness",
+                  "metrics"
+                ],
+                "properties": {
+                  "completeness": {
+                    "required": [
+                      "complete",
+                      "missing_reference_rows",
+                      "row_coverage",
+                      "value_coverage"
+                    ],
+                    "properties": {
+                      "complete": {
+                        "const": true
+                      },
+                      "missing_reference_rows": {
+                        "const": 0
+                      },
+                      "row_coverage": {
+                        "const": 1.0
+                      },
+                      "value_coverage": {
+                        "const": 1.0
+                      }
+                    }
+                  },
+                  "metrics": {
+                    "required": [
+                      "max_relative_error",
+                      "rms_relative_error",
+                      "n_points_compared",
+                      "missing_rows"
+                    ],
+                    "properties": {
+                      "max_relative_error": {
+                        "type": "number"
+                      },
+                      "rms_relative_error": {
+                        "type": "number"
+                      },
+                      "max_absolute_error": {
+                        "type": "number"
+                      },
+                      "n_points_compared": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "missing_rows": {
+                        "const": 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "verdict": {
+                "const": "pass"
+              }
+            },
+            "required": [
+              "verdict"
+            ]
+          },
+          "then": {
+            "properties": {
+              "derivation_independence": {
+                "const": "independent"
+              },
+              "reference_evidence": {
+                "const": "independent_snapshot"
+              },
+              "comparison_evidence": {
+                "const": "machine_verifiable"
+              },
+              "verdict_ceiling": {
+                "const": "pass"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "derivation_independence": {
+                "const": "independent"
+              }
+            },
+            "required": [
+              "derivation_independence"
+            ]
+          },
+          "then": {
+            "properties": {
+              "tasks_used": {
+                "minItems": 1
+              },
+              "provenance_issues": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "derivation_independence": {
+                "enum": [
+                  "independent_manual",
+                  "tainted",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "derivation_independence"
+            ]
+          },
+          "then": {
+            "properties": {
+              "provenance_issues": {
+                "minItems": 1
+              },
+              "verdict_ceiling": {
+                "const": "needs_human_review"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "properties": {
+                  "comparison": {
+                    "properties": {
+                      "kind": {
+                        "not": {
+                          "const": "formula"
+                        }
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  }
+                },
+                "required": [
+                  "comparison"
+                ]
+              },
+              {
+                "properties": {
+                  "verdict": {
+                    "not": {
+                      "const": "blocked"
+                    }
+                  }
+                },
+                "required": [
+                  "verdict"
+                ]
+              }
+            ]
+          },
+          "then": {
+            "properties": {
+              "comparison": {
+                "properties": {
+                  "metrics": {
+                    "minProperties": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
       "properties": {
         "target_id": {
           "$ref": "#/$defs/target_id"
         },
         "tasks_used": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/task_id"
           }
@@ -259,8 +894,24 @@
         "derivation_independence": {
           "$ref": "#/$defs/independence"
         },
+        "reference_evidence": {
+          "type": "string",
+          "enum": [
+            "independent_snapshot",
+            "synthetic",
+            "unverified"
+          ]
+        },
+        "comparison_evidence": {
+          "type": "string",
+          "enum": [
+            "machine_verifiable",
+            "requires_human_review"
+          ]
+        },
         "provenance_issues": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/provenance_issue"
           }
@@ -292,6 +943,7 @@
         },
         "warnings": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "type": "string"
           }
@@ -330,6 +982,7 @@
       "properties": {
         "tasks": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/task_id"
           }
@@ -347,14 +1000,18 @@
       "additionalProperties": false,
       "required": [
         "analysis_id",
-        "scan_meta_checksum"
+        "scan_meta_checksum",
+        "scan_csv_checksum"
       ],
       "properties": {
         "analysis_id": {
           "type": "string",
-          "pattern": "^analysis-\\d{3}$"
+          "pattern": "^analysis-[0-9]{3}$"
         },
         "scan_meta_checksum": {
+          "$ref": "#/$defs/checksum"
+        },
+        "scan_csv_checksum": {
           "$ref": "#/$defs/checksum"
         }
       }
@@ -364,10 +1021,14 @@
       "additionalProperties": false,
       "required": [
         "repro_targets_checksum",
+        "paper_extract_checksum",
         "digitized_files_checksums"
       ],
       "properties": {
         "repro_targets_checksum": {
+          "$ref": "#/$defs/checksum"
+        },
+        "paper_extract_checksum": {
           "$ref": "#/$defs/checksum"
         },
         "digitized_files_checksums": {
@@ -405,6 +1066,133 @@
         }
       }
     },
+    "dependency_graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "verification_status"
+      ],
+      "properties": {
+        "version": {
+          "const": "sha256-bytes-v1"
+        },
+        "verification_status": {
+          "enum": [
+            "verified",
+            "legacy-unverified"
+          ]
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/dependency_entry"
+          }
+        },
+        "root_sha256": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        },
+        "reason": {
+          "type": "string",
+          "pattern": "\\S"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "verification_status": {
+              "const": "verified"
+            }
+          },
+          "required": [
+            "entries",
+            "root_sha256"
+          ],
+          "not": {
+            "required": [
+              "reason"
+            ]
+          }
+        },
+        {
+          "properties": {
+            "verification_status": {
+              "const": "legacy-unverified"
+            }
+          },
+          "required": [
+            "reason"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "entries"
+                ]
+              },
+              {
+                "required": [
+                  "root_sha256"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "dependency_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope",
+        "role",
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "scope": {
+          "enum": [
+            "project",
+            "repository"
+          ]
+        },
+        "role": {
+          "type": "string",
+          "pattern": "^[^\\s]+$"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "allOf": [
+            {
+              "pattern": "^[^/\\\\]+(?:/[^/\\\\]+)*$"
+            },
+            {
+              "not": {
+                "pattern": "(^|/)\\.\\.?(/|$)"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[A-Za-z]:/"
+              }
+            },
+            {
+              "not": {
+                "pattern": "\u0000"
+              }
+            }
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$"
+        }
+      }
+    },
     "run_summary": {
       "type": "object",
       "additionalProperties": false,
@@ -422,7 +1210,7 @@
         },
         "n_targets_total": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 1
         },
         "n_targets_pass": {
           "type": "integer",

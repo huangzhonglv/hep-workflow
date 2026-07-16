@@ -41,8 +41,8 @@ def test_workspace_validator_checks_scan_meta_row_count(
 
     assert result.returncode == 1, result.stdout + result.stderr
     assert (
-        "n_allowed + n_excluded + n_skipped" in result.stdout
-        or "data row count" in result.stdout
+        "does not match scan.csv row count" in result.stdout
+        or "classification counts do not sum exactly" in result.stdout
     )
 
 

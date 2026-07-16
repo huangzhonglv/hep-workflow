@@ -1,0 +1,369 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HEP Reproduction Target Readiness",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "analysis_id",
+    "workflow_state",
+    "summary",
+    "targets"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "analysis_id": {
+      "type": "string",
+      "pattern": "^analysis-[0-9]{3}$"
+    },
+    "workflow_state": {
+      "type": "string",
+      "enum": [
+        "routable",
+        "not_ready"
+      ]
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "targets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/target_readiness"
+      }
+    }
+  },
+  "$defs": {
+    "target_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+    },
+    "task_id": {
+      "type": "string",
+      "pattern": "^task-[0-9]{3}$"
+    },
+    "target_kind": {
+      "type": "string",
+      "enum": [
+        "formula",
+        "benchmark_point",
+        "keyed_benchmark_set",
+        "scan_table",
+        "figure_curve",
+        "parametric_curve",
+        "exclusion_region"
+      ]
+    },
+    "issue_code": {
+      "type": "string",
+      "enum": [
+        "artifact_missing",
+        "artifact_invalid",
+        "schema_invalid",
+        "duplicate_identifier",
+        "reference_evidence_invalid",
+        "model_identity_mismatch",
+        "observable_task_unmatched",
+        "calculation_result_missing",
+        "calculation_result_invalid",
+        "calculation_dependency_stale",
+        "scan_hint_missing",
+        "scan_hint_incomplete",
+        "manifest_analysis_missing",
+        "manifest_analysis_invalid",
+        "manifest_analysis_not_done",
+        "scan_artifact_invalid",
+        "scan_dependency_stale",
+        "scan_target_mismatch"
+      ]
+    },
+    "issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "code",
+        "detail"
+      ],
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/issue_code"
+        },
+        "detail": {
+          "type": "string",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "stage_status": {
+      "type": "string",
+      "enum": [
+        "ready",
+        "missing",
+        "invalid",
+        "stale",
+        "blocked",
+        "not_applicable"
+      ]
+    },
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "status",
+        "issues"
+      ],
+      "properties": {
+        "required": {
+          "type": "boolean"
+        },
+        "status": {
+          "$ref": "#/$defs/stage_status"
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/issue"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "required": {
+                "const": false
+              }
+            },
+            "required": [
+              "required"
+            ]
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "not_applicable"
+              },
+              "issues": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "ready",
+                  "not_applicable"
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "issues": {
+                "maxItems": 0
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "issues": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "calculation_stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "status",
+        "issues",
+        "task_ids"
+      ],
+      "properties": {
+        "required": {
+          "type": "boolean"
+        },
+        "status": {
+          "$ref": "#/$defs/stage_status"
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/issue"
+          }
+        },
+        "task_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/task_id"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "required": {
+                "const": false
+              }
+            },
+            "required": [
+              "required"
+            ]
+          },
+          "then": {
+            "properties": {
+              "status": {
+                "const": "not_applicable"
+              },
+              "issues": {
+                "maxItems": 0
+              },
+              "task_ids": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "enum": [
+                  "ready",
+                  "not_applicable"
+                ]
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "issues": {
+                "maxItems": 0
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "issues": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "requirements": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "literature",
+        "model",
+        "calculations",
+        "numerics"
+      ],
+      "properties": {
+        "literature": {
+          "$ref": "#/$defs/stage"
+        },
+        "model": {
+          "$ref": "#/$defs/stage"
+        },
+        "calculations": {
+          "$ref": "#/$defs/calculation_stage"
+        },
+        "numerics": {
+          "$ref": "#/$defs/stage"
+        }
+      }
+    },
+    "target_readiness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_id",
+        "kind",
+        "disposition",
+        "requirements"
+      ],
+      "properties": {
+        "target_id": {
+          "$ref": "#/$defs/target_id"
+        },
+        "kind": {
+          "$ref": "#/$defs/target_kind"
+        },
+        "disposition": {
+          "type": "string",
+          "enum": [
+            "ready",
+            "blocked",
+            "not_ready"
+          ]
+        },
+        "requirements": {
+          "$ref": "#/$defs/requirements"
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total",
+        "ready",
+        "blocked",
+        "not_ready"
+      ],
+      "properties": {
+        "total": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ready": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "blocked": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "not_ready": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

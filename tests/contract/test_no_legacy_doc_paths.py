@@ -1,4 +1,4 @@
-"""Legacy doc paths before the PR-1 refactor must not appear in project files."""
+"""Legacy documentation paths must not appear in project files."""
 import subprocess
 from pathlib import Path
 
@@ -24,11 +24,12 @@ def _tracked_text_files() -> list[Path]:
         capture_output=True,
         text=True,
     )
-    return [
+    paths = [
         REPO_ROOT / rel
         for rel in result.stdout.splitlines()
         if rel.endswith(SCAN_SUFFIXES)
     ]
+    return [path for path in paths if path.is_file()]
 
 
 def test_no_legacy_doc_paths():

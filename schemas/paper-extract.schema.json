@@ -1,0 +1,480 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HEP Paper Extract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "paper_id",
+    "source",
+    "fields",
+    "parameters",
+    "interactions",
+    "constraints_in_paper",
+    "observables",
+    "formulas",
+    "scan_config_hints",
+    "unit_conversion_notes"
+  ],
+  "properties": {
+    "paper_id": {
+      "$ref": "#/$defs/non_empty_string"
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "fields": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/field"
+      }
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/parameter"
+      }
+    },
+    "interactions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/interaction"
+      }
+    },
+    "constraints_in_paper": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/paper_constraint"
+      }
+    },
+    "observables": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/observable"
+      }
+    },
+    "formulas": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/formula"
+      }
+    },
+    "scan_config_hints": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/scan_config_hint"
+      }
+    },
+    "unit_conversion_notes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/unit_conversion"
+      }
+    },
+    "paper_local_to_canonical": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/constraint_id"
+      }
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "$defs": {
+    "non_empty_string": {
+      "type": "string",
+      "minLength": 1
+    },
+    "canonical_name": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+      "not": {
+        "enum": [
+          "False", "None", "True", "and", "as", "assert", "async", "await",
+          "break", "class", "continue", "def", "del", "elif", "else", "except",
+          "finally", "for", "from", "global", "if", "import", "in", "is",
+          "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try",
+          "while", "with", "yield"
+        ]
+      }
+    },
+    "target_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_-]*$"
+    },
+    "constraint_id": {
+      "type": "string",
+      "pattern": "^c-[0-9]{3}$"
+    },
+    "scalar": {
+      "type": [
+        "string",
+        "number",
+        "boolean",
+        "null"
+      ]
+    },
+    "string_list": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/non_empty_string"
+      }
+    },
+    "canonical_name_list": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/canonical_name"
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind",
+        "identifier"
+      ],
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "identifier": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "version_used": {
+          "type": "string"
+        }
+      }
+    },
+    "quantum_numbers": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/scalar"
+      }
+    },
+    "field": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "paper_name",
+        "canonical_name",
+        "latex",
+        "spin_or_type",
+        "role",
+        "source_anchor"
+      ],
+      "properties": {
+        "paper_name": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "canonical_name": {
+          "$ref": "#/$defs/canonical_name"
+        },
+        "latex": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "spin_or_type": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "role": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "quantum_numbers": {
+          "$ref": "#/$defs/quantum_numbers"
+        },
+        "mass_parameter": {
+          "$ref": "#/$defs/canonical_name"
+        },
+        "source_anchor": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "paper_name",
+        "canonical_name",
+        "latex",
+        "unit",
+        "role",
+        "source_anchor"
+      ],
+      "properties": {
+        "paper_name": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "canonical_name": {
+          "$ref": "#/$defs/canonical_name"
+        },
+        "latex": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "unit": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "role": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "suggested_range": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "$ref": "#/$defs/scalar"
+          }
+        },
+        "value": {
+          "$ref": "#/$defs/scalar"
+        },
+        "source_anchor": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "interaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "latex",
+        "particles",
+        "couplings",
+        "source_anchor"
+      ],
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/target_id"
+        },
+        "latex": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "particles": {
+          "$ref": "#/$defs/canonical_name_list"
+        },
+        "couplings": {
+          "$ref": "#/$defs/canonical_name_list"
+        },
+        "source_anchor": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "paper_constraint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "source_anchor",
+        "quantity",
+        "value",
+        "notes"
+      ],
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "source_anchor": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "quantity": {
+          "$ref": "#/$defs/canonical_name"
+        },
+        "value": {
+          "$ref": "#/$defs/scalar"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "observable": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "latex",
+        "description",
+        "source_anchor",
+        "formula_labels",
+        "target_ids"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/canonical_name"
+        },
+        "latex": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "description": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "source_anchor": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "formula_labels": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/target_id"
+          }
+        },
+        "target_ids": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/target_id"
+          }
+        }
+      }
+    },
+    "formula": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "latex",
+        "source_anchor",
+        "human_review_required"
+      ],
+      "properties": {
+        "label": {
+          "$ref": "#/$defs/target_id"
+        },
+        "latex": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "source_anchor": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "human_review_required": {
+          "const": true
+        },
+        "allowed_uses": {
+          "$ref": "#/$defs/string_list"
+        },
+        "forbidden_uses": {
+          "$ref": "#/$defs/string_list"
+        }
+      }
+    },
+    "scan_parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "canonical_name",
+        "range",
+        "scale"
+      ],
+      "properties": {
+        "canonical_name": {
+          "$ref": "#/$defs/canonical_name"
+        },
+        "range": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "$ref": "#/$defs/scalar"
+          }
+        },
+        "scale": {
+          "$ref": "#/$defs/non_empty_string"
+        }
+      }
+    },
+    "fixed_parameters": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/canonical_name"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/scalar"
+      }
+    },
+    "grid": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/canonical_name"
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1
+      }
+    },
+    "scan_config_hint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_id",
+        "scan_parameters",
+        "fixed_parameters",
+        "constraints_used",
+        "grid",
+        "missing_fields",
+        "source_anchor"
+      ],
+      "properties": {
+        "target_id": {
+          "$ref": "#/$defs/target_id"
+        },
+        "scan_parameters": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/scan_parameter"
+          }
+        },
+        "fixed_parameters": {
+          "$ref": "#/$defs/fixed_parameters"
+        },
+        "constraints_used": {
+          "$ref": "#/$defs/string_list"
+        },
+        "grid": {
+          "$ref": "#/$defs/grid"
+        },
+        "missing_fields": {
+          "$ref": "#/$defs/string_list"
+        },
+        "source_anchor": {
+          "$ref": "#/$defs/non_empty_string"
+        }
+      }
+    },
+    "unit_conversion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "quantity",
+        "paper_unit",
+        "workspace_unit",
+        "conversion",
+        "source_anchor"
+      ],
+      "properties": {
+        "quantity": {
+          "$ref": "#/$defs/canonical_name"
+        },
+        "paper_unit": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "workspace_unit": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "conversion": {
+          "$ref": "#/$defs/non_empty_string"
+        },
+        "source_anchor": {
+          "$ref": "#/$defs/non_empty_string"
+        }
+      }
+    }
+  }
+}

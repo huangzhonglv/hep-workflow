@@ -19,9 +19,22 @@
     }
   },
   "$defs": {
+    "canonical_name": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+      "not": {
+        "enum": [
+          "False", "None", "True", "and", "as", "assert", "async", "await",
+          "break", "class", "continue", "def", "del", "elif", "else", "except",
+          "finally", "for", "from", "global", "if", "import", "in", "is",
+          "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try",
+          "while", "with", "yield"
+        ]
+      }
+    },
     "task_id": {
       "type": "string",
-      "pattern": "^task-\\d{3}$"
+      "pattern": "^task-[0-9]{3}$"
     },
     "source_type": {
       "type": "string",
@@ -70,6 +83,9 @@
         "inputs": {
           "type": "object",
           "minProperties": 1,
+          "propertyNames": {
+            "$ref": "#/$defs/canonical_name"
+          },
           "additionalProperties": {
             "type": [
               "number",
@@ -111,7 +127,7 @@
           "$ref": "#/$defs/task_id"
         },
         "observable": {
-          "type": "string"
+          "$ref": "#/$defs/canonical_name"
         },
         "has_benchmark": {
           "type": "boolean"

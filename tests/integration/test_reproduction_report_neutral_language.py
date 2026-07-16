@@ -46,7 +46,7 @@ def test_generated_compare_diagnostic_uses_neutral_language(
     repo_root: Path,
 ) -> None:
     project_dir = _smoke_project(tmp_path, project_copy_factory, smoke_e2e_fixture_path)
-    _write_synthetic_scan(project_dir)
+    _write_synthetic_scan(project_dir, repo_root)
 
     result = _run_compare(repo_root, project_dir)
     assert result.returncode == 0, result.stdout + result.stderr

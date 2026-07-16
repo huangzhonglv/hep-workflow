@@ -1,0 +1,224 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HEP Digitized Data Normalization Record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "method",
+    "source_data_file",
+    "canonical_data_file",
+    "source_units",
+    "canonical_units",
+    "conversions",
+    "fixed_parameters",
+    "acquisition",
+    "source_checksum",
+    "canonical_checksum"
+  ],
+  "properties": {
+    "status": {
+      "const": "canonical"
+    },
+    "method": {
+      "type": "string",
+      "enum": [
+        "identity",
+        "converted"
+      ]
+    },
+    "source_data_file": {
+      "type": "string",
+      "minLength": 1
+    },
+    "canonical_data_file": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_units": {
+      "$ref": "#/$defs/units"
+    },
+    "canonical_units": {
+      "$ref": "#/$defs/units"
+    },
+    "conversions": {
+      "$ref": "#/$defs/conversions"
+    },
+    "fixed_parameters": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/canonical_name"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/fixed_normalization"
+      }
+    },
+    "acquisition": {
+      "$ref": "#/$defs/acquisition"
+    },
+    "source_checksum": {
+      "$ref": "#/$defs/sha256"
+    },
+    "canonical_checksum": {
+      "$ref": "#/$defs/sha256"
+    }
+  },
+  "$defs": {
+    "canonical_name": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+      "not": {
+        "enum": [
+          "False", "None", "True", "and", "as", "assert", "async", "await",
+          "break", "class", "continue", "def", "del", "elif", "else", "except",
+          "finally", "for", "from", "global", "if", "import", "in", "is",
+          "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try",
+          "while", "with", "yield"
+        ]
+      }
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "units": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "$ref": "#/$defs/canonical_name"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "\\S"
+      }
+    },
+    "conversions": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "$ref": "#/$defs/canonical_name"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "operation",
+          "factor",
+          "offset"
+        ],
+        "properties": {
+          "operation": {
+            "const": "linear"
+          },
+          "factor": {
+            "type": "number",
+            "not": {
+              "const": 0
+            }
+          },
+          "offset": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "fixed_value": {
+      "anyOf": [
+        {"type": "number"},
+        {"type": "string"},
+        {"type": "boolean"}
+      ]
+    },
+    "fixed_normalization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_value",
+        "source_unit",
+        "canonical_value",
+        "canonical_unit",
+        "operation",
+        "factor",
+        "offset"
+      ],
+      "properties": {
+        "source_value": {"$ref": "#/$defs/fixed_value"},
+        "source_unit": {"type": "string", "pattern": "\\S"},
+        "canonical_value": {"$ref": "#/$defs/fixed_value"},
+        "canonical_unit": {"type": "string", "pattern": "\\S"},
+        "operation": {"const": "linear"},
+        "factor": {"type": "number", "not": {"const": 0}},
+        "offset": {"type": "number"}
+      }
+    },
+    "acquisition": {
+      "type": "object",
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source_type": {"const": "synthetic_fixture"}
+            },
+            "required": ["source_type"]
+          },
+          "then": {
+            "properties": {
+              "method": {"const": "synthetic_fixture"}
+            }
+          },
+          "else": {
+            "properties": {
+              "method": {"not": {"const": "synthetic_fixture"}}
+            }
+          }
+        }
+      ],
+      "required": [
+        "source_type",
+        "paper_id",
+        "source_locator",
+        "method",
+        "acquired_at"
+      ],
+      "properties": {
+        "source_type": {
+          "type": "string",
+          "enum": [
+            "paper_figure",
+            "paper_table",
+            "supplemental_data",
+            "author_data",
+            "trusted_repository",
+            "synthetic_fixture"
+          ]
+        },
+        "source_locator": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "paper_id": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "manual_digitization",
+            "direct_copy",
+            "programmatic_import",
+            "synthetic_fixture"
+          ]
+        },
+        "acquired_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

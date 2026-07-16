@@ -1,5 +1,11 @@
 # Synthetic Analysis 001
 
+- Analysis ID: `analysis-001`
+- Total points: 2
+- Allowed: 2
+- Excluded: 0
+- Skipped: 0
+
 ## Key findings
 
 This is a precomputed synthetic scan used by workspace validator tests.

@@ -11,6 +11,12 @@ from typing import Any, Callable
 
 import pytest
 
+from scripts._dependency_graph import build_dependency_graph, sha256_file
+from scripts._workflow_dependencies import (
+    calculation_dependency_specs,
+    scan_dependency_specs,
+)
+
 
 def load_module_from_path(module_name: str, path: Path) -> Any:
     spec = importlib.util.spec_from_file_location(module_name, path)
@@ -60,6 +66,14 @@ def init_analysis_script(repo_root: Path) -> Path:
 @pytest.fixture(scope="session")
 def make_figures_script(repo_root: Path) -> Path:
     return repo_root / ".agents" / "skills" / "hep-numerics" / "scripts" / "make_figures.py"
+
+
+@pytest.fixture(scope="session")
+def make_figures_module(repo_root: Path) -> Any:
+    return load_module_from_path(
+        "hep_numerics_make_figures_test_module",
+        repo_root / ".agents" / "skills" / "hep-numerics" / "scripts" / "make_figures.py",
+    )
 
 
 @pytest.fixture
@@ -128,7 +142,7 @@ def ensure_task_result(write_json: Callable[[Path, Any], None], read_json: Calla
 
         manifest = read_json(project_dir / "manifest.json")
         model_version = manifest["active_model_version"]
-        model_checksum = manifest["artifacts"]["model"]["checksum"]
+        model_checksum = sha256_file(project_dir / "model" / "model-spec.json")
         calc_tasks = read_json(project_dir / "model" / "calc-tasks.json")
         task_type = next(
             (
@@ -155,7 +169,7 @@ def ensure_task_result(write_json: Callable[[Path, Any], None], read_json: Calla
             from __future__ import annotations
 
 
-            def {function_name}(*, M_Hpp: float, v_Delta: float = 1.0, **kwargs) -> float:
+            def {function_name}(*, M_Hpp: float, v_Delta: float = 1.0) -> float:
                 safe_mass = max(float(M_Hpp), 1.0)
                 safe_vev = max(float(v_Delta), 1.0e-12)
                 return float(1.0e-13 * safe_vev * (100.0 / safe_mass) ** 2)
@@ -177,9 +191,7 @@ def ensure_task_result(write_json: Callable[[Path, Any], None], read_json: Calla
             encoding="utf-8",
         )
 
-        write_json(
-            task_dir / "result-meta.json",
-            {
+        result_meta = {
                 "task_id": task_id,
                 "observable": observable,
                 "python_function": function_name,
@@ -202,12 +214,93 @@ def ensure_task_result(write_json: Callable[[Path, Any], None], read_json: Calla
                     "model_version": model_version,
                     "model_checksum": model_checksum,
                 },
-            },
+            }
+        result_meta["input_provenance"] = build_dependency_graph(
+            project_dir,
+            Path(__file__).resolve().parent.parent,
+            calculation_dependency_specs(
+                project_dir,
+                Path(__file__).resolve().parent.parent,
+                task_id,
+                result_meta,
+            ),
         )
+        write_json(task_dir / "result-meta.json", result_meta)
 
         return task_dir
 
     return _ensure_task_result
+
+
+@pytest.fixture
+def rebind_calculation_result(
+    write_json: Callable[[Path, Any], None],
+    read_json: Callable[[Path], Any],
+):
+    def _rebind(project_dir: Path, task_id: str = "task-001") -> None:
+        repo = Path(__file__).resolve().parent.parent
+        meta_path = project_dir / "calculations" / task_id / "result-meta.json"
+        metadata = read_json(meta_path)
+        metadata["input_provenance"] = build_dependency_graph(
+            project_dir,
+            repo,
+            calculation_dependency_specs(
+                project_dir,
+                repo,
+                task_id,
+                metadata,
+            ),
+        )
+        write_json(meta_path, metadata)
+
+    return _rebind
+
+
+@pytest.fixture
+def rebind_scan_result(
+    write_json: Callable[[Path, Any], None],
+    read_json: Callable[[Path], Any],
+):
+    def _rebind(project_dir: Path, analysis_id: str = "analysis-001") -> None:
+        repo = Path(__file__).resolve().parent.parent
+        config_path = project_dir / "numerics" / "scan-configs" / f"{analysis_id}.json"
+        result_dir = project_dir / "numerics" / "scan-results" / analysis_id
+        meta_path = result_dir / "scan.meta.json"
+        config = read_json(config_path)
+        metadata = read_json(meta_path)
+        metadata["scan_config_snapshot"] = config
+        metadata["scan_config_source"] = config_path.read_text(encoding="utf-8")
+        metadata["scan_config_sha256"] = sha256_file(config_path)
+        metadata["rng"] = {
+            "algorithm": "numpy.random.PCG64",
+            "algorithm_version": "pcg64-v1",
+            "substream_scheme": "numpy-seedsequence-v1",
+            "seed": config["seed"],
+            "substreams": {"smoke": 0, "scan": 1},
+            "consumers": [],
+        }
+        metadata["scan_csv_sha256"] = sha256_file(result_dir / "scan.csv")
+        metadata["input_provenance"] = build_dependency_graph(
+            project_dir,
+            repo,
+            scan_dependency_specs(
+                project_dir,
+                repo,
+                config_path,
+                config,
+                producer_script=(
+                    repo
+                    / ".agents"
+                    / "skills"
+                    / "hep-numerics"
+                    / "scripts"
+                    / "run_scan.py"
+                ),
+            ),
+        )
+        write_json(meta_path, metadata)
+
+    return _rebind
 
 
 def pytest_addoption(parser):

@@ -6,6 +6,10 @@
       "kind": "figure_curve",
       "x_param": "M_Hpp",
       "y_param": "BR_toy",
+      "scan_parameters": [
+        "M_Hpp",
+        "v_Delta"
+      ],
       "observables": [
         "BR_toy"
       ],
@@ -19,13 +23,62 @@
       "tolerance": {
         "kind": "relative",
         "value": 1e-12
-      }
+      },
+      "normalization": {
+        "status": "canonical",
+        "method": "identity",
+        "source_units": {
+          "M_Hpp": "GeV",
+          "BR_toy": "dimensionless"
+        },
+        "canonical_units": {
+          "M_Hpp": "GeV",
+          "BR_toy": "dimensionless"
+        },
+        "conversions": {
+          "M_Hpp": {"operation": "linear", "factor": 1.0, "offset": 0.0},
+          "BR_toy": {"operation": "linear", "factor": 1.0, "offset": 0.0}
+        },
+        "fixed_parameters": {
+          "v_Delta": {
+            "source_value": 0.001,
+            "source_unit": "GeV",
+            "canonical_value": 0.001,
+            "canonical_unit": "GeV",
+            "operation": "linear",
+            "factor": 1.0,
+            "offset": 0.0
+          }
+        },
+        "acquisition": {
+          "source_type": "synthetic_fixture",
+          "paper_id": "arxiv:2605.00001v1",
+          "source_locator": "smoke-e2e synthetic target-001 curve",
+          "method": "synthetic_fixture",
+          "acquired_at": "2026-05-09T00:00:00Z"
+        },
+        "source_data_file": "literature/digitized/target-001.raw.csv",
+        "record_file": "literature/digitized/target-001.normalization.json"
+      },
+      "comparison_domain": {
+        "x_min": 100.0,
+        "x_max": 1000.0
+      },
+      "curve_representation": "single_valued_y_of_x"
     },
     {
       "id": "target-002",
       "kind": "benchmark_point",
       "x_param": "M_Hpp",
-      "y_param": "BR_toy",
+      "y_param": "v_Delta",
+      "match_columns": [
+        "M_Hpp",
+        "v_Delta"
+      ],
+      "scan_parameters": [
+        "M_Hpp",
+        "v_Delta"
+      ],
       "observables": [
         "BR_toy"
       ],
@@ -37,6 +90,35 @@
       "tolerance": {
         "kind": "relative",
         "value": 1e-12
+      },
+      "normalization": {
+        "status": "canonical",
+        "method": "identity",
+        "source_units": {
+          "M_Hpp": "GeV",
+          "v_Delta": "GeV",
+          "BR_toy": "dimensionless"
+        },
+        "canonical_units": {
+          "M_Hpp": "GeV",
+          "v_Delta": "GeV",
+          "BR_toy": "dimensionless"
+        },
+        "conversions": {
+          "M_Hpp": {"operation": "linear", "factor": 1.0, "offset": 0.0},
+          "v_Delta": {"operation": "linear", "factor": 1.0, "offset": 0.0},
+          "BR_toy": {"operation": "linear", "factor": 1.0, "offset": 0.0}
+        },
+        "fixed_parameters": {},
+        "acquisition": {
+          "source_type": "synthetic_fixture",
+          "paper_id": "arxiv:2605.00001v1",
+          "source_locator": "smoke-e2e synthetic target-002 benchmark",
+          "method": "synthetic_fixture",
+          "acquired_at": "2026-05-09T00:00:00Z"
+        },
+        "source_data_file": "literature/digitized/target-002.raw.csv",
+        "record_file": "literature/digitized/target-002.normalization.json"
       }
     }
   ]

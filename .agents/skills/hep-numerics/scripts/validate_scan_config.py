@@ -10,6 +10,18 @@ import sys
 from pathlib import Path
 from typing import Any
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))
+
+from _strict_json import load_json as strict_load_json
+from _identity import (
+    validate_analysis_id,
+    validate_figure_output_keys,
+    validate_named_json_path,
+)
+from _publication_transaction import publication_lock
+
 
 class CheckResult:
     """One validation check entry."""
@@ -68,28 +80,34 @@ def resolve_cli_inputs(args: argparse.Namespace) -> tuple[Path | None, Path, str
     """Resolve the project directory, scan-config path, and analysis ID."""
 
     if args.scan_config is not None:
-        scan_config_path = args.scan_config.resolve()
+        scan_config_path = args.scan_config.absolute()
         project_dir = args.project_dir.resolve() if args.project_dir is not None else None
         if project_dir is None:
             try:
                 project_dir = RUN_SCAN.find_project_dir(scan_config_path.parent)
             except FileNotFoundError:
                 project_dir = None
-        analysis_id = None
+        analysis_id = validate_analysis_id(scan_config_path.stem)
         return project_dir, scan_config_path, analysis_id
 
     if args.project_dir is None:
         raise ValueError("--project-dir is required when using --analysis-id")
 
     project_dir = args.project_dir.resolve()
-    scan_config_path = project_dir / "numerics" / "scan-configs" / f"{args.analysis_id}.json"
-    return project_dir, scan_config_path, args.analysis_id
+    analysis_id = validate_analysis_id(args.analysis_id)
+    scan_config_path = validate_named_json_path(
+        project_dir / "numerics" / "scan-configs" / f"{analysis_id}.json",
+        project_dir / "numerics" / "scan-configs",
+        analysis_id,
+        "scan-config",
+    )
+    return project_dir, scan_config_path, analysis_id
 
 
 def load_json(path: Path) -> Any:
     """Load JSON from disk."""
 
-    return json.loads(path.read_text(encoding="utf-8"))
+    return strict_load_json(path)
 
 
 def format_schema_issue(issue: Any) -> str:
@@ -110,8 +128,63 @@ def validate_scan_config(
     *,
     scan_config_path: Path,
     project_dir: Path | None = None,
+    manifest_override: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Validate one scan-config path and return a structured result."""
+
+    if project_dir is not None:
+        try:
+            inputs = RUN_SCAN.load_inputs(
+                project_dir=project_dir,
+                scan_config_path=scan_config_path,
+                manifest_override=manifest_override,
+            )
+            shared = RUN_SCAN.validate(inputs)
+        except Exception as exc:
+            detail = f"NUM-PREFLIGHT-000: shared preflight could not load inputs: {exc}"
+            return {
+                "scan_config_path": scan_config_path,
+                "project_dir": project_dir,
+                "scan_config": None,
+                "checks": [CheckResult("FAIL", "shared runtime preflight", [detail])],
+                "errors": [detail],
+                "warnings": [],
+                "infos": [],
+            }
+        checks = [
+            CheckResult(
+                check.status,
+                f"{check.code} {check.title}",
+                list(check.details),
+            )
+            for check in shared["report"].checks
+        ]
+        errors = [
+            f"{check.code}: {detail}"
+            for check in shared["report"].checks
+            if check.status == "FAIL"
+            for detail in check.details
+        ]
+        warnings = [
+            f"{check.code}: {detail}"
+            for check in shared["report"].checks
+            if check.status == "WARN"
+            for detail in check.details
+        ]
+        return {
+            "scan_config_path": inputs["paths"]["scan_config"],
+            "project_dir": inputs["project_dir"],
+            "scan_config": inputs["scan_config"],
+            "checks": checks,
+            "errors": errors,
+            "warnings": warnings,
+            "infos": [],
+            "issue_codes": [
+                check.code
+                for check in shared["report"].checks
+                if check.status in {"FAIL", "WARN"}
+            ],
+        }
 
     try:
         from jsonschema import Draft202012Validator
@@ -179,6 +252,40 @@ def validate_scan_config(
     )
 
     assert scan_config is not None  # for type-checkers after early return
+    try:
+        payload_analysis_id = validate_analysis_id(scan_config.get("analysis_id"))
+        if payload_analysis_id != scan_config_path.stem:
+            raise ValueError(
+                f"scan-config payload analysis_id {payload_analysis_id!r} does not "
+                f"match filename stem {scan_config_path.stem!r}"
+            )
+        if project_dir is not None:
+            scan_config_path = validate_named_json_path(
+                scan_config_path,
+                project_dir / "numerics" / "scan-configs",
+                payload_analysis_id,
+                "scan-config",
+            )
+    except ValueError as exc:
+        detail = str(exc)
+        errors.append(detail)
+        checks.append(CheckResult("FAIL", "scan-config identity binding", [detail]))
+        return {
+            "scan_config_path": scan_config_path,
+            "project_dir": project_dir,
+            "scan_config": scan_config,
+            "checks": checks,
+            "errors": errors,
+            "warnings": warnings,
+            "infos": infos,
+        }
+    checks.append(
+        CheckResult(
+            "PASS",
+            "scan-config identity binding",
+            ["payload analysis_id, filename stem, and contained config path agree"],
+        )
+    )
     scan_parameter_names = [entry["canonical_name"] for entry in scan_config.get("scan_parameters", [])]
     fixed_parameter_names = [entry["canonical_name"] for entry in scan_config.get("fixed_parameters", [])]
     observable_bindings = scan_config.get("observables", [])
@@ -192,6 +299,20 @@ def validate_scan_config(
         config_semantic_details.append(
             f"parameters cannot be both scan and fixed: {duplicate_names}"
         )
+    for label, names in (
+        ("scan_parameters", scan_parameter_names),
+        ("fixed_parameters", fixed_parameter_names),
+        ("observables", observable_names),
+        ("constraints_used", constraints_used),
+    ):
+        duplicates = sorted({name for name in names if names.count(name) > 1})
+        if duplicates:
+            config_semantic_details.append(f"{label} contains duplicate names: {duplicates}")
+
+    try:
+        validate_figure_output_keys(scan_config)
+    except ValueError as exc:
+        config_semantic_details.append(str(exc))
 
     depends_on_task_ids = set(scan_config.get("depends_on", {}).get("task_ids", []))
     for binding in observable_bindings:
@@ -213,6 +334,16 @@ def validate_scan_config(
         if figure.get("x") not in scan_name_set:
             config_semantic_details.append(
                 f"{label}.x {figure.get('x')!r} is not covered by scan_parameters"
+            )
+        active_axes = {figure.get("x")}
+        if kind == "exclusion_2d":
+            active_axes.add(figure.get("y"))
+        expected_hidden = scan_name_set - active_axes
+        declared_hidden = set(figure.get("fixed", {}))
+        if declared_hidden != expected_hidden:
+            config_semantic_details.append(
+                f"{label}.fixed must exactly declare hidden scan parameters: "
+                f"expected {sorted(expected_hidden)}, got {sorted(declared_hidden)}"
             )
         if kind == "exclusion_2d":
             if figure.get("y") not in scan_name_set:
@@ -250,245 +381,13 @@ def validate_scan_config(
             )
         )
 
-    if project_dir is None:
-        info_detail = (
-            "project-aware semantic checks were skipped because no workspace project "
-            "could be inferred from the scan-config path"
-        )
-        infos.append(info_detail)
-        checks.append(CheckResult("SKIP", "project-aware semantic checks", [info_detail]))
-        return {
-            "scan_config_path": scan_config_path,
-            "project_dir": project_dir,
-            "scan_config": scan_config,
-            "checks": checks,
-            "errors": errors,
-            "warnings": warnings,
-            "infos": infos,
-        }
-
-    model_spec_path = project_dir / "model" / "model-spec.json"
-    calc_tasks_path = project_dir / "model" / "calc-tasks.json"
-    constraints_path = project_dir / "constraints" / "constraints-data.json"
-    custom_observables_path = project_dir / "numerics" / "custom_observables.py"
-
-    project_artifact_details: list[str] = []
-    try:
-        model_spec = load_json(model_spec_path)
-        calc_tasks = load_json(calc_tasks_path)
-        constraints_data = load_json(constraints_path)
-    except FileNotFoundError as exc:
-        project_artifact_details.append(str(exc))
-        model_spec = {}
-        calc_tasks = {}
-        constraints_data = {}
-    except json.JSONDecodeError as exc:
-        project_artifact_details.append(str(exc))
-        model_spec = {}
-        calc_tasks = {}
-        constraints_data = {}
-
-    if project_artifact_details:
-        errors.extend(project_artifact_details)
-        checks.append(CheckResult("FAIL", "project artifact loading", project_artifact_details))
-        return {
-            "scan_config_path": scan_config_path,
-            "project_dir": project_dir,
-            "scan_config": scan_config,
-            "checks": checks,
-            "errors": errors,
-            "warnings": warnings,
-            "infos": infos,
-        }
-
-    checks.append(
-        CheckResult(
-            "PASS",
-            "project artifact loading",
-            [
-                f"loaded {model_spec_path}",
-                f"loaded {calc_tasks_path}",
-                f"loaded {constraints_path}",
-            ],
-        )
+    assert project_dir is None
+    info_detail = (
+        "project-aware semantic checks were skipped because no workspace project "
+        "could be inferred from the scan-config path"
     )
-
-    model_parameters = {
-        parameter["name"]: parameter
-        for parameter in model_spec.get("parameters", [])
-        if isinstance(parameter, dict) and "name" in parameter
-    }
-    canonical_parameter_names = set(model_parameters)
-    calc_tasks_by_id = {
-        task["task_id"]: task
-        for task in calc_tasks.get("tasks", [])
-        if isinstance(task, dict) and "task_id" in task
-    }
-    constraints_by_id = {
-        constraint["id"]: constraint
-        for constraint in constraints_data.get("constraints", [])
-        if isinstance(constraint, dict) and "id" in constraint
-    }
-
-    parameter_details: list[str] = []
-    for name in scan_parameter_names:
-        parameter = model_parameters.get(name)
-        if parameter is None:
-            parameter_details.append(
-                f"scan parameter {name!r} is not a model-spec canonical name"
-            )
-            continue
-        if parameter.get("role") != "scan":
-            warnings.append(
-                f"scan parameter {name!r} has role {parameter.get('role')!r}, expected 'scan'"
-            )
-    for name in fixed_parameter_names:
-        if name not in canonical_parameter_names:
-            parameter_details.append(
-                f"fixed parameter {name!r} is not a model-spec canonical name"
-            )
-
-    for index, figure in enumerate(figure_specs, start=1):
-        label = f"figures[{index - 1}]"
-        x_name = figure.get("x")
-        if x_name is not None and x_name not in canonical_parameter_names:
-            parameter_details.append(
-                f"{label}.x {x_name!r} is not a model-spec canonical name"
-            )
-        y_name = figure.get("y")
-        if y_name is not None and y_name not in canonical_parameter_names:
-            parameter_details.append(
-                f"{label}.y {y_name!r} is not a model-spec canonical name"
-            )
-
-    if parameter_details:
-        errors.extend(parameter_details)
-        checks.append(CheckResult("FAIL", "model-spec parameter coverage", parameter_details))
-    elif warnings:
-        warning_details = [warning for warning in warnings if "scan parameter" in warning]
-        if warning_details:
-            checks.append(CheckResult("WARN", "model-spec parameter coverage", warning_details))
-        else:
-            checks.append(
-                CheckResult("PASS", "model-spec parameter coverage", ["all scan/fixed parameter names exist in model-spec"])
-            )
-    else:
-        checks.append(
-            CheckResult("PASS", "model-spec parameter coverage", ["all scan/fixed parameter names exist in model-spec"])
-        )
-
-    constraint_details: list[str] = []
-    for constraint_id in constraints_used:
-        if constraint_id not in constraints_by_id:
-            constraint_details.append(
-                f"constraints_used entry {constraint_id!r} is missing from constraints-data.json"
-            )
-
-    if constraint_details:
-        errors.extend(constraint_details)
-        checks.append(CheckResult("FAIL", "constraint lookup", constraint_details))
-    else:
-        checks.append(
-            CheckResult("PASS", "constraint lookup", ["every constraints_used entry exists in constraints-data.json"])
-        )
-
-    binding_details: list[str] = []
-    custom_module = None
-    custom_import_attempted = False
-
-    for binding in observable_bindings:
-        observable = binding["observable"]
-        source = binding["source"]
-        if source["type"] == "task":
-            task_id = source["task_id"]
-            if task_id not in calc_tasks_by_id:
-                binding_details.append(
-                    f"observable {observable!r} references unknown calc-task {task_id!r}"
-                )
-                continue
-            result_meta_path = project_dir / "calculations" / task_id / "result-meta.json"
-            try:
-                result_meta = load_json(result_meta_path)
-            except FileNotFoundError:
-                binding_details.append(
-                    f"observable {observable!r} task {task_id!r} is missing {result_meta_path}"
-                )
-                continue
-            except json.JSONDecodeError as exc:
-                binding_details.append(
-                    f"observable {observable!r} task {task_id!r} has invalid result-meta JSON: {exc}"
-                )
-                continue
-            if result_meta.get("translation_status") != "complete":
-                binding_details.append(
-                    f"observable {observable!r} task {task_id!r} has translation_status "
-                    f"{result_meta.get('translation_status')!r}, expected 'complete'"
-                )
-            provenance = result_meta.get("calculation_provenance")
-            if provenance == "blocked":
-                binding_details.append(
-                    f"observable {observable!r} task {task_id!r} has blocked calculation_provenance"
-                )
-            if provenance in RUN_SCAN.FORMULA_FALLBACK_PROVENANCES:
-                message = (
-                    f"observable {observable!r} task {task_id!r} uses formula fallback "
-                    f"provenance {provenance!r}"
-                )
-                if scan_config.get("allow_formula_fallback") is not True:
-                    binding_details.append(
-                        message + "; set allow_formula_fallback=true to opt in explicitly"
-                    )
-                else:
-                    warnings.append(
-                        message
-                        + f" (benchmark_used_as_input={result_meta.get('benchmark_used_as_input')!r})"
-                    )
-            if provenance == "package_x_derived":
-                if result_meta.get("benchmark_used_as_input") is not False:
-                    binding_details.append(
-                        f"observable {observable!r} task {task_id!r} is package_x_derived "
-                        f"but benchmark_used_as_input is {result_meta.get('benchmark_used_as_input')!r}"
-                    )
-                if not result_meta.get("package_x_methods"):
-                    binding_details.append(
-                        f"observable {observable!r} task {task_id!r} is package_x_derived "
-                        "but package_x_methods is empty"
-                    )
-        elif source["type"] == "custom":
-            if not custom_import_attempted:
-                custom_import_attempted = True
-                if not custom_observables_path.exists():
-                    binding_details.append(
-                        f"custom observable module is missing: {custom_observables_path}"
-                    )
-                else:
-                    try:
-                        custom_module = RUN_SCAN.import_module_from_path(
-                            "hep_numerics_validate_custom_observables",
-                            custom_observables_path,
-                        )
-                    except Exception as exc:
-                        binding_details.append(
-                            f"failed to import custom observables from {custom_observables_path}: {exc}"
-                        )
-            function_name = source["function"]
-            if custom_module is not None and not hasattr(custom_module, function_name):
-                binding_details.append(
-                    f"custom observable function {function_name!r} is missing from {custom_observables_path.name}"
-                )
-
-    if binding_details:
-        errors.extend(binding_details)
-        checks.append(CheckResult("FAIL", "observable binding resolution", binding_details))
-    else:
-        checks.append(
-            CheckResult(
-                "PASS",
-                "observable binding resolution",
-                ["task/custom observable bindings resolve within the current project context"],
-            )
-        )
-
+    infos.append(info_detail)
+    checks.append(CheckResult("SKIP", "project-aware semantic checks", [info_detail]))
     return {
         "scan_config_path": scan_config_path,
         "project_dir": project_dir,
@@ -532,10 +431,14 @@ def main() -> int:
 
     try:
         project_dir, scan_config_path, _ = resolve_cli_inputs(args)
-        result = validate_scan_config(
-            scan_config_path=scan_config_path,
-            project_dir=project_dir,
-        )
+        with publication_lock(
+            project_dir,
+            "scan-config-validation",
+        ):
+            result = validate_scan_config(
+                scan_config_path=scan_config_path,
+                project_dir=project_dir,
+            )
         print_report(result)
         return exit_code_for_result(result)
     except Exception as exc:

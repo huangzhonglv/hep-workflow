@@ -1,0 +1,19 @@
+{
+  "version": "sha256-bytes-v1",
+  "verification_status": "verified",
+  "entries": [
+    {
+      "scope": "project",
+      "role": "model_spec",
+      "path": "model/model-spec.json",
+      "sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "scope": "repository",
+      "role": "runner",
+      "path": "scripts/example-runner.py",
+      "sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+    }
+  ],
+  "root_sha256": "sha256:5785c1069f9e8af313eb0fff3f52f2fbbb722d0adb38a87456e6c2100daace52"
+}

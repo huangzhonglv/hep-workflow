@@ -25,6 +25,14 @@
       "kind": "benchmark_point",
       "x_param": "M_Zp",
       "y_param": "g_prime",
+      "match_columns": [
+        "M_Zp",
+        "g_prime"
+      ],
+      "scan_parameters": [
+        "M_Zp",
+        "g_prime"
+      ],
       "observables": [
         "delta_a_mu"
       ],
@@ -38,6 +46,110 @@
       "tolerance": {
         "kind": "relative",
         "value": 0.05
+      },
+      "normalization": {
+        "status": "canonical",
+        "method": "identity",
+        "source_units": {
+          "M_Zp": "GeV",
+          "g_prime": "dimensionless",
+          "delta_a_mu": "dimensionless"
+        },
+        "canonical_units": {
+          "M_Zp": "GeV",
+          "g_prime": "dimensionless",
+          "delta_a_mu": "dimensionless"
+        },
+        "conversions": {
+          "M_Zp": {"operation": "linear", "factor": 1.0, "offset": 0.0},
+          "g_prime": {"operation": "linear", "factor": 1.0, "offset": 0.0},
+          "delta_a_mu": {"operation": "linear", "factor": 1.0, "offset": 0.0}
+        },
+        "fixed_parameters": {
+          "m_mu": {
+            "source_value": 0.10566,
+            "source_unit": "GeV",
+            "canonical_value": 0.10566,
+            "canonical_unit": "GeV",
+            "operation": "linear",
+            "factor": 1.0,
+            "offset": 0.0
+          }
+        },
+        "acquisition": {
+          "source_type": "paper_table",
+          "paper_id": "arxiv:2601.01234v2",
+          "source_locator": "arxiv:2601.01234v2#benchmark-1",
+          "method": "manual_digitization",
+          "acquired_at": "2026-07-13T00:00:00Z"
+        },
+        "source_data_file": "literature/digitized/bench-1.raw.csv",
+        "record_file": "literature/digitized/bench-1.normalization.json"
+      }
+    },
+    {
+      "id": "bench-set-1",
+      "kind": "keyed_benchmark_set",
+      "x_param": "M_Zp",
+      "y_param": "g_prime",
+      "match_columns": [
+        "M_Zp",
+        "g_prime"
+      ],
+      "scan_parameters": [
+        "M_Zp",
+        "g_prime"
+      ],
+      "observables": [
+        "delta_a_mu"
+      ],
+      "fixed": {
+        "m_mu": 0.10566
+      },
+      "constraints_in_paper": [],
+      "data_file": "literature/digitized/bench-set-1.csv",
+      "tolerance": {
+        "kind": "relative",
+        "value": 0.05
+      },
+      "normalization": {
+        "status": "canonical",
+        "method": "identity",
+        "source_units": {
+          "M_Zp": "GeV",
+          "g_prime": "dimensionless",
+          "delta_a_mu": "dimensionless"
+        },
+        "canonical_units": {
+          "M_Zp": "GeV",
+          "g_prime": "dimensionless",
+          "delta_a_mu": "dimensionless"
+        },
+        "conversions": {
+          "M_Zp": {"operation": "linear", "factor": 1.0, "offset": 0.0},
+          "g_prime": {"operation": "linear", "factor": 1.0, "offset": 0.0},
+          "delta_a_mu": {"operation": "linear", "factor": 1.0, "offset": 0.0}
+        },
+        "fixed_parameters": {
+          "m_mu": {
+            "source_value": 0.10566,
+            "source_unit": "GeV",
+            "canonical_value": 0.10566,
+            "canonical_unit": "GeV",
+            "operation": "linear",
+            "factor": 1.0,
+            "offset": 0.0
+          }
+        },
+        "acquisition": {
+          "source_type": "paper_table",
+          "paper_id": "arxiv:2601.01234v2",
+          "source_locator": "arxiv:2601.01234v2#benchmark-set-1",
+          "method": "manual_digitization",
+          "acquired_at": "2026-07-13T00:00:00Z"
+        },
+        "source_data_file": "literature/digitized/bench-set-1.raw.csv",
+        "record_file": "literature/digitized/bench-set-1.normalization.json"
       }
     },
     {
@@ -45,6 +157,14 @@
       "kind": "scan_table",
       "x_param": "M_Zp",
       "y_param": "g_prime",
+      "match_columns": [
+        "M_Zp",
+        "g_prime"
+      ],
+      "scan_parameters": [
+        "M_Zp",
+        "g_prime"
+      ],
       "observables": [
         "delta_a_mu",
         "Br_tau_to_mumu_mu"
@@ -59,17 +179,64 @@
       "tolerance": {
         "kind": "absolute",
         "value": 1e-12
+      },
+      "normalization": {
+        "status": "canonical",
+        "method": "identity",
+        "source_units": {
+          "M_Zp": "GeV",
+          "g_prime": "dimensionless",
+          "delta_a_mu": "dimensionless",
+          "Br_tau_to_mumu_mu": "dimensionless"
+        },
+        "canonical_units": {
+          "M_Zp": "GeV",
+          "g_prime": "dimensionless",
+          "delta_a_mu": "dimensionless",
+          "Br_tau_to_mumu_mu": "dimensionless"
+        },
+        "conversions": {
+          "M_Zp": {"operation": "linear", "factor": 1.0, "offset": 0.0},
+          "g_prime": {"operation": "linear", "factor": 1.0, "offset": 0.0},
+          "delta_a_mu": {"operation": "linear", "factor": 1.0, "offset": 0.0},
+          "Br_tau_to_mumu_mu": {"operation": "linear", "factor": 1.0, "offset": 0.0}
+        },
+        "fixed_parameters": {
+          "m_mu": {
+            "source_value": 0.10566,
+            "source_unit": "GeV",
+            "canonical_value": 0.10566,
+            "canonical_unit": "GeV",
+            "operation": "linear",
+            "factor": 1.0,
+            "offset": 0.0
+          }
+        },
+        "acquisition": {
+          "source_type": "paper_table",
+          "paper_id": "arxiv:2601.01234v2",
+          "source_locator": "arxiv:2601.01234v2#table-2",
+          "method": "direct_copy",
+          "acquired_at": "2026-07-13T00:00:00Z"
+        },
+        "source_data_file": "literature/digitized/table-2.raw.csv",
+        "record_file": "literature/digitized/table-2.normalization.json"
       }
     },
     {
       "id": "fig-3a",
       "kind": "figure_curve",
       "x_param": "M_Zp",
-      "y_param": "g_prime",
+      "y_param": "delta_a_mu",
+      "scan_parameters": [
+        "M_Zp",
+        "g_prime"
+      ],
       "observables": [
         "delta_a_mu"
       ],
       "fixed": {
+        "g_prime": 0.001,
         "m_mu": 0.10566
       },
       "constraints_in_paper": [
@@ -80,6 +247,116 @@
       "tolerance": {
         "kind": "relative",
         "value": 0.15
+      },
+      "normalization": {
+        "status": "canonical",
+        "method": "converted",
+        "source_units": {
+          "M_Zp": "MeV",
+          "delta_a_mu": "dimensionless"
+        },
+        "canonical_units": {
+          "M_Zp": "GeV",
+          "delta_a_mu": "dimensionless"
+        },
+        "conversions": {
+          "M_Zp": {"operation": "linear", "factor": 0.001, "offset": 0.0},
+          "delta_a_mu": {"operation": "linear", "factor": 1.0, "offset": 0.0}
+        },
+        "fixed_parameters": {
+          "g_prime": {
+            "source_value": 0.001,
+            "source_unit": "dimensionless",
+            "canonical_value": 0.001,
+            "canonical_unit": "dimensionless",
+            "operation": "linear",
+            "factor": 1.0,
+            "offset": 0.0
+          },
+          "m_mu": {
+            "source_value": 105.66,
+            "source_unit": "MeV",
+            "canonical_value": 0.10566,
+            "canonical_unit": "GeV",
+            "operation": "linear",
+            "factor": 0.001,
+            "offset": 0.0
+          }
+        },
+        "acquisition": {
+          "source_type": "paper_figure",
+          "paper_id": "arxiv:2601.01234v2",
+          "source_locator": "arxiv:2601.01234v2#figure-3a",
+          "method": "manual_digitization",
+          "acquired_at": "2026-07-13T00:00:00Z"
+        },
+        "source_data_file": "literature/digitized/fig-3a.raw.csv",
+        "record_file": "literature/digitized/fig-3a.normalization.json"
+      },
+      "comparison_domain": {
+        "x_min": 10.0,
+        "x_max": 1000.0
+      },
+      "curve_representation": "single_valued_y_of_x"
+    },
+    {
+      "id": "fig-parametric",
+      "kind": "parametric_curve",
+      "x_param": "curve_x",
+      "y_param": "curve_y",
+      "curve_parameter": "path_t",
+      "scan_parameters": [
+        "path_t"
+      ],
+      "observables": [
+        "curve_x",
+        "curve_y"
+      ],
+      "fixed": {},
+      "constraints_in_paper": [],
+      "data_file": "literature/digitized/fig-parametric.csv",
+      "tolerance": {
+        "kind": "normalized_distance",
+        "value": 0.05
+      },
+      "normalization": {
+        "status": "canonical",
+        "method": "identity",
+        "source_units": {
+          "path_t": "dimensionless",
+          "curve_x": "GeV",
+          "curve_y": "GeV"
+        },
+        "canonical_units": {
+          "path_t": "dimensionless",
+          "curve_x": "GeV",
+          "curve_y": "GeV"
+        },
+        "conversions": {
+          "path_t": {"operation": "linear", "factor": 1.0, "offset": 0.0},
+          "curve_x": {"operation": "linear", "factor": 1.0, "offset": 0.0},
+          "curve_y": {"operation": "linear", "factor": 1.0, "offset": 0.0}
+        },
+        "fixed_parameters": {},
+        "acquisition": {
+          "source_type": "paper_figure",
+          "paper_id": "arxiv:2601.01234v2",
+          "source_locator": "arxiv:2601.01234v2#figure-parametric",
+          "method": "manual_digitization",
+          "acquired_at": "2026-07-13T00:00:00Z"
+        },
+        "source_data_file": "literature/digitized/fig-parametric.raw.csv",
+        "record_file": "literature/digitized/fig-parametric.normalization.json"
+      },
+      "parameter_domain": {
+        "parameter_min": 0.0,
+        "parameter_max": 1.0
+      },
+      "curve_representation": "ordered_parametric_xy",
+      "curve_closed": true,
+      "coordinate_scales": {
+        "curve_x": 1000.0,
+        "curve_y": 1000.0
       }
     },
     {
@@ -87,9 +364,12 @@
       "kind": "exclusion_region",
       "x_param": "M_Zp",
       "y_param": "g_prime",
+      "scan_parameters": [
+        "M_Zp",
+        "g_prime"
+      ],
       "observables": [
-        "delta_a_mu",
-        "Br_tau_to_mumu_mu"
+        "delta_a_mu"
       ],
       "fixed": {
         "m_mu": 0.10566
@@ -101,10 +381,67 @@
       ],
       "data_file": "literature/digitized/fig-5.csv",
       "tolerance": {
-        "kind": "qualitative",
-        "value": "region_topology"
+        "kind": "normalized_distance",
+        "value": 0.15
       },
-      "expected_qualitative": "Allowed and excluded regions have the same connected components and boundary ordering."
+      "normalization": {
+        "status": "canonical",
+        "method": "identity",
+        "source_units": {
+          "M_Zp": "GeV",
+          "delta_a_mu": "dimensionless",
+          "g_prime": "dimensionless"
+        },
+        "canonical_units": {
+          "M_Zp": "GeV",
+          "delta_a_mu": "dimensionless",
+          "g_prime": "dimensionless"
+        },
+        "conversions": {
+          "M_Zp": {"operation": "linear", "factor": 1.0, "offset": 0.0},
+          "delta_a_mu": {"operation": "linear", "factor": 1.0, "offset": 0.0},
+          "g_prime": {"operation": "linear", "factor": 1.0, "offset": 0.0}
+        },
+        "fixed_parameters": {
+          "m_mu": {
+            "source_value": 0.10566,
+            "source_unit": "GeV",
+            "canonical_value": 0.10566,
+            "canonical_unit": "GeV",
+            "operation": "linear",
+            "factor": 1.0,
+            "offset": 0.0
+          }
+        },
+        "acquisition": {
+          "source_type": "paper_figure",
+          "paper_id": "arxiv:2601.01234v2",
+          "source_locator": "arxiv:2601.01234v2#figure-5",
+          "method": "manual_digitization",
+          "acquired_at": "2026-07-13T00:00:00Z"
+        },
+        "source_data_file": "literature/digitized/fig-5.raw.csv",
+        "record_file": "literature/digitized/fig-5.normalization.json"
+      },
+      "boundary": {
+        "mode": "observable_threshold",
+        "observable": "delta_a_mu",
+        "operator": "greater_than_or_equal",
+        "value": 2.51e-9,
+        "value_unit": "dimensionless",
+        "component_column": "component_id",
+        "reference_order_column": "point_order",
+        "reference_closed_column": "is_closed",
+        "reference_excluded_probe": {
+          "x": 100.0,
+          "y": 0.01
+        }
+      },
+      "coordinate_scales": {
+        "M_Zp": 1000.0,
+        "g_prime": 0.1
+      },
+      "expected_qualitative": "Allowed and excluded regions have the same connected components and excluded side."
     }
   ]
 }

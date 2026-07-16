@@ -39,7 +39,11 @@ Top-level `parameters` should list the canonical parameter names relevant to the
 constraint set.
 
 `model_version`, when present, records the model version that the constraint set
-was assembled against. It must match `^v\d+$`.
+was assembled against. It must match `^v\d+$`. In a manifest-backed project it
+must equal `manifest.active_model_version`,
+`manifest.artifacts.model.version`, and the version declared by
+`manifest.artifacts.constraints.depends_on.model`; schema-valid disagreement is
+an invalid cross-file identity and must fail before publication.
 
 ## Two Independent Labels
 
@@ -89,11 +93,18 @@ If either condition is missing, use `manual_only` instead.
 When `implementation_status` is `interpolated`, include an `interpolation`
 payload with:
 - local asset path
-- x-axis parameter name and unit
-- y-axis quantity name and unit
+- x-axis parameter name, exact CSV column name, and canonical model unit
+- y-axis quantity name, exact CSV column name, and canonical constraint unit
 - interpolation method
 - valid range
 - extrapolation policy
+
+The table must have an explicit UTF-8 header, at least two finite rows, unique
+strictly increasing x nodes, and no duplicate headers. The configured columns
+must exist exactly. For `extrapolation_policy: "forbidden"`, the nodes must
+cover the full declared `valid_range`; the runner never sorts, guesses columns,
+or silently extrapolates incomplete support. The constraint's own non-empty
+`unit` is mandatory and must equal `interpolation.y_unit`.
 
 ## Hard Invariants
 

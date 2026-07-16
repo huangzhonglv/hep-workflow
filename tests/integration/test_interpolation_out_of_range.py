@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import csv
 import subprocess
 import sys
 
 
-def test_interpolation_out_of_range_rows_are_skipped(
+def test_interpolation_out_of_range_fails_closed_without_persisting_partial_scan(
     tmp_path,
     project_copy_factory,
     read_json,
@@ -22,15 +21,22 @@ def test_interpolation_out_of_range_rows_are_skipped(
             "type": "upper_limit",
             "observable": "M_Hpp",
             "limit_value": 170.0,
+            "unit": "GeV",
             "implementation_status": "interpolated",
             "source": "pytest synthetic fixture",
+            "notes": "Synthetic table-backed constraint.",
             "computed_by": {
-                "type": "external"
+                "type": "external",
+                "note": "Values supplied by the local synthetic table."
             },
             "interpolation": {
                 "file": "constraints/interp-limit.csv",
                 "x_parameter": "M_Hpp",
-                "y_quantity": "limit",
+                "x_column": "M_Hpp",
+                "x_unit": "GeV",
+                "y_quantity": "M_Hpp",
+                "y_column": "limit",
+                "y_unit": "GeV",
                 "method": "linear",
                 "valid_range": [100.0, 200.0],
                 "extrapolation_policy": "forbidden",
@@ -67,7 +73,7 @@ def test_interpolation_out_of_range_rows_are_skipped(
             ],
             "fixed_parameters": [],
             "observables": [
-                {"observable": "dummy_obs", "source": {"type": "custom", "function": "dummy_obs"}}
+                {"observable": "dummy_obs", "source": {"type": "custom", "function": "dummy_obs", "canonical_unit": "dimensionless"}}
             ],
             "constraints_used": ["c-900"],
             "figures": [],
@@ -88,13 +94,16 @@ def test_interpolation_out_of_range_rows_are_skipped(
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 0, result.stdout + result.stderr
+    assert result.returncode == 1
+    combined_output = result.stdout + result.stderr
+    assert "incomplete scientific evidence" in combined_output
+    assert "2 / 5 points had failed/skipped evaluations" in combined_output
+    assert "No scan outputs or manifest history were written" in combined_output
 
-    scan_csv_path = project_dir / "numerics" / "scan-results" / "analysis-103" / "scan.csv"
-    with scan_csv_path.open("r", encoding="utf-8", newline="") as handle:
-        rows = list(csv.DictReader(handle))
-
-    skipped_rows = [row for row in rows if row["c-900_verdict"] == "skipped"]
-    assert len(skipped_rows) == 2
-    assert {row["M_Hpp"] for row in skipped_rows} == {"50.0", "250.0"}
-    assert {row["c-900_skip_reason"] for row in skipped_rows} == {"out of interpolation range"}
+    result_dir = project_dir / "numerics" / "scan-results" / "analysis-103"
+    assert not (result_dir / "scan.csv").exists()
+    assert not (result_dir / "scan.meta.json").exists()
+    assert not (
+        project_dir / "numerics" / "analysis-summary-analysis-103.md"
+    ).exists()
+    assert read_json(project_dir / "manifest.json") == manifest

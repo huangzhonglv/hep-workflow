@@ -7,14 +7,19 @@ derived / external observables are needed.
 
 Each function here must:
   - accept keyword arguments matching model-spec.json canonical names
-  - return a float (or raise NotImplementedError)
+  - return one finite real numeric scalar (never bool, NaN, or +/-Inf)
+  - raise a meaningful exception for an invalid domain or unavailable result
 
 Functions bound to constraints that have `computed_by.type == "derived"`
-additionally receive `task_outputs: dict[str, Callable[..., float]]` so
-the function body can call task-provided Python functions.
+additionally receive an immutable
+`task_outputs: Mapping[str, Callable[..., float]]` containing exactly the
+task IDs declared by that observable's scan-config source. A function may
+explicitly declare `rng` to receive its deterministic local PCG64 substream;
+ambient Python/NumPy RNG APIs are forbidden.
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Callable
 
 import numpy as np
@@ -38,6 +43,9 @@ def m_eff_bb_type_ii(
     TODO: implement using PMNS elements and Majorana phases.
     Signs, branch choices, and the NO/IO assumption should be made
     explicit in the implementation.
+
+    Any domain error or non-finite result must raise; hep-numerics fails the
+    whole scan closed rather than publishing the remaining points.
     """
     raise NotImplementedError(
         "m_eff_bb_type_ii is not yet implemented; see c-003 derivation note"

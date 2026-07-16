@@ -81,11 +81,10 @@ ambiguity.
 ## Hard Invariants
 
 - For initial hep-idea output, set `version` to `"v1"`.
-- Parameter names must use canonical names: ASCII letters, digits, and
-  underscores only.
-- Canonical parameter names are unique and immutable within the project.
-- Parameter names reused in `calc-tasks.json`, `constraints-data.json`,
-  `result-meta.json`, and `result-python.py` must match this file exactly.
+- Machine-readable canonical names must match `^[A-Za-z_][A-Za-z0-9_]*$`
+  and must not be Python hard keywords; each name is project-global and
+  immutable, and downstream artifacts must reuse it exactly. See
+  `docs/contracts/canonical-name-convention.md`.
 - Every model-specific or new particle referenced downstream must match a
   `fields[].name` entry in this file exactly.
 - Standard SM particle labels may appear directly in downstream task or process

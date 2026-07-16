@@ -47,7 +47,9 @@ def test_cli_rejects_existing_repro_id(repo_root, tmp_path) -> None:
     assert "already exists" in result.stderr
 
 
-def test_full_script_writes_metrics_and_pass_verdict(repo_root, tmp_path) -> None:
+def test_full_script_writes_metrics_with_conservative_human_review_verdict(
+    repo_root, tmp_path
+) -> None:
     project_dir = make_compare_project(tmp_path)
 
     result = run_compare(repo_root, project_dir, "run-001")
@@ -55,7 +57,8 @@ def test_full_script_writes_metrics_and_pass_verdict(repo_root, tmp_path) -> Non
     assert result.returncode == 0, result.stdout + result.stderr
     payload = load_result(project_dir, "run-001")
     target_result = payload["results"][0]
-    assert target_result["verdict"] == "pass"
-    assert target_result["verdict_ceiling"] == "pass"
-    assert target_result["comparison"]["metrics"]["max_relative_error"] == 0.0
+    assert target_result["derivation_independence"] == "unknown"
+    assert target_result["verdict"] == "needs_human_review"
+    assert target_result["verdict_ceiling"] == "needs_human_review"
+    assert 0.0 < target_result["comparison"]["metrics"]["max_relative_error"] < 0.01
     assert target_result["notes"] == ""

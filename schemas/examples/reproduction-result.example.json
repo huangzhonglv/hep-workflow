@@ -17,15 +17,30 @@
     },
     "numerics": {
       "analysis_id": "analysis-001",
-      "scan_meta_checksum": "sha256:e63c3dfb6b7e8f01a5db741d2f9f673a5fda6edfd5709dbcb6f915fd083a0001"
+      "scan_meta_checksum": "sha256:e63c3dfb6b7e8f01a5db741d2f9f673a5fda6edfd5709dbcb6f915fd083a0001",
+      "scan_csv_checksum": "sha256:f63c3dfb6b7e8f01a5db741d2f9f673a5fda6edfd5709dbcb6f915fd083a0002"
     },
     "literature": {
       "repro_targets_checksum": "sha256:615b790d416e93b204745c36f69ee0cfe652a8164d31d64c7710ec6211230001",
+      "paper_extract_checksum": "sha256:715b790d416e93b204745c36f69ee0cfe652a8164d31d64c7710ec6211230002",
       "digitized_files_checksums": {
         "literature/digitized/fig-3a.csv": "sha256:69cfe56e95c17684ce88fa967be5e7033c64dd3e515bc843b9a5cf50dd270001",
         "literature/digitized/fig-5.csv": "sha256:0b0b6f7270fb5c21534f3b1fa53745ec2e9b17fb5eeab698724c3f75ee510001"
       }
     }
+  },
+  "input_provenance": {
+    "version": "sha256-bytes-v1",
+    "verification_status": "verified",
+    "entries": [
+      {
+        "scope": "project",
+        "role": "repro-targets",
+        "path": "literature/repro-targets.json",
+        "sha256": "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      }
+    ],
+    "root_sha256": "sha256:902e8b3b13f2041b8c52b2b46932fb28813970d33993522649db13a586c91ab3"
   },
   "run_summary": {
     "derivation_independence_aggregate": "independent_manual",
@@ -42,14 +57,30 @@
         "task-001"
       ],
       "derivation_independence": "independent",
+      "reference_evidence": "independent_snapshot",
+      "comparison_evidence": "machine_verifiable",
       "provenance_issues": [],
       "comparison": {
         "kind": "figure_curve",
-        "interpolation_method": "linear",
+        "interpolation_method": "piecewise_linear_union_knots",
         "metrics": {
           "max_relative_error": 0.04,
           "rms_relative_error": 0.02,
-          "n_points_compared": 48
+          "max_absolute_error": 1.1e-10,
+          "n_points_compared": 48,
+          "n_zero_reference_values": 0,
+          "n_zero_reference_crossings": 0,
+          "relative_error_defined": 1,
+          "declared_x_min": 1.0,
+          "declared_x_max": 10.0,
+          "reference_x_min": 1.0,
+          "reference_x_max": 10.0,
+          "scan_x_min": 1.0,
+          "scan_x_max": 10.0,
+          "reference_domain_coverage": 1.0,
+          "scan_domain_coverage": 1.0
+          ,"reference_node_count": 31,
+          "scan_node_count": 48
         }
       },
       "tolerance": {
@@ -61,15 +92,21 @@
       "generated_files": {
         "overlay": {
           "pdf": "reproduction/figures/run-001/fig-3a-overlay.pdf",
-          "png": "reproduction/figures/run-001/fig-3a-overlay.png"
+          "pdf_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "png": "reproduction/figures/run-001/fig-3a-overlay.png",
+          "png_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
         },
         "side_by_side": {
           "pdf": "reproduction/figures/run-001/fig-3a-side-by-side.pdf",
-          "png": "reproduction/figures/run-001/fig-3a-side-by-side.png"
+          "pdf_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "png": "reproduction/figures/run-001/fig-3a-side-by-side.png",
+          "png_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
         },
         "residual": {
           "pdf": "reproduction/figures/run-001/fig-3a-residual.pdf",
-          "png": "reproduction/figures/run-001/fig-3a-residual.png"
+          "pdf_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "png": "reproduction/figures/run-001/fig-3a-residual.png",
+          "png_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
         }
       },
       "warnings": [],
@@ -81,6 +118,8 @@
         "task-002"
       ],
       "derivation_independence": "independent_manual",
+      "reference_evidence": "independent_snapshot",
+      "comparison_evidence": "machine_verifiable",
       "provenance_issues": [
         {
           "task_id": "task-002",
@@ -91,27 +130,63 @@
       "comparison": {
         "kind": "exclusion_region",
         "metrics": {
-          "boundary_points_compared": 31
+          "max_normalized_hausdorff_distance": 0.1199,
+          "max_normalized_hausdorff_distance_lower_bound": 0.1199,
+          "max_normalized_hausdorff_distance_upper_bound": 0.12,
+          "max_normalized_hausdorff_distance_uncertainty": 9.999999999998899e-05,
+          "normalized_bbox_iou": 0.84,
+          "n_points_compared": 4096,
+          "n_reference_boundary_points": 31,
+          "n_predicted_boundary_points": 29,
+          "reference_to_predicted_max_normalized_distance": 0.1199,
+          "reference_to_predicted_max_normalized_distance_lower_bound": 0.1199,
+          "predicted_to_reference_max_normalized_distance": 0.1099,
+          "predicted_to_reference_max_normalized_distance_lower_bound": 0.1099,
+          "max_component_normalized_hausdorff_distance": 0.1199,
+          "reference_component_count": 1,
+          "predicted_component_count": 1,
+          "matched_component_count": 1,
+          "component_count_match": 1,
+          "closed_topology_match": 1,
+          "reference_face_count": 1,
+          "verified_face_probe_count": 1,
+          "face_assignment_defined": 1,
+          "face_parent_topology_match": 1,
+          "face_probe_coverage_ratio": 1.0,
+          "component_coverage_ratio": 1.0,
+          "excluded_probe_match": 1,
+          "distance_within_tolerance_proven": 1,
+          "distance_exceeds_tolerance_proven": 0,
+          "distance_decision_defined": 1,
+          "polyline_sampling_max_gap": 0.0002,
+          "polyline_sampling_error_bound": 0.0001,
+          "polyline_sample_count": 4096
         }
       },
       "tolerance": {
-        "kind": "qualitative",
-        "value": "region_topology"
+        "kind": "normalized_distance",
+        "value": 0.15
       },
       "verdict": "needs_human_review",
       "verdict_ceiling": "needs_human_review",
       "generated_files": {
         "overlay": {
           "pdf": "reproduction/figures/run-001/fig-5-overlay.pdf",
-          "png": "reproduction/figures/run-001/fig-5-overlay.png"
+          "pdf_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "png": "reproduction/figures/run-001/fig-5-overlay.png",
+          "png_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
         },
         "side_by_side": {
           "pdf": "reproduction/figures/run-001/fig-5-side-by-side.pdf",
-          "png": "reproduction/figures/run-001/fig-5-side-by-side.png"
+          "pdf_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "png": "reproduction/figures/run-001/fig-5-side-by-side.png",
+          "png_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
         },
         "residual": {
           "pdf": "reproduction/figures/run-001/fig-5-residual.pdf",
-          "png": "reproduction/figures/run-001/fig-5-residual.png"
+          "pdf_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+          "png": "reproduction/figures/run-001/fig-5-residual.png",
+          "png_sha256": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
         }
       },
       "warnings": [],

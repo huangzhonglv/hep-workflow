@@ -98,21 +98,24 @@ Once selected, ask if they want to adjust anything before generating the full pr
 ## Step 5: Generate full proposal, model formalization, constraints, and benchmarks
 
 This step has multiple phases executed in sequence:
-- 5a: determine the project name, initialize the project skeleton, and write the research proposal
+- 5a: determine the project name, initialize the project skeleton, allocate a
+  private foundation attempt, and author the research proposal candidate
 - 5b: formalize the model into machine-readable definitions
 - 5c: collect and structure experimental constraints
 - 5d: search for benchmark formulas for calculation verification
-- 5e: write manifest.json
+- 5e: author candidate `manifest.json`, then finalize the complete generation
 
 Each phase owns only its own outputs. Use `scripts/init_project_skeleton.py`
 to create the directory skeleton once. That script creates directories only:
 it does **not** create `manifest.json` or any placeholder output files.
 After the skeleton exists, Steps 5a-5e may assume their target directories
-already exist and should each write only the files assigned to that phase.
+already exist. They must write only the files assigned to that phase below the
+private `candidate_dir` returned by `scripts/init_foundation_attempt.py`; they
+must never write the authoritative project artifact paths directly.
 
 ### Step 5a - Initialize the project skeleton and write the research proposal
 
-Write the proposal to the project workspace. Follow these steps:
+Author the proposal in the private foundation candidate. Follow these steps:
 
 1. Determine the project name from the idea (short, kebab-case, e.g.,
    `u1-lmu-ltau-nova-t2k` or `scotogenic-2loop-leptogenesis`)
@@ -138,12 +141,23 @@ Write the proposal to the project workspace. Follow these steps:
    |-- model/
    |-- calculations/
    |-- constraints/
-   |-- numerics/
+   `-- numerics/
+   |   |-- scan-configs/
    |   |-- scan-results/
    |   `-- figures/
-   `-- paper/
    ```
-3. Create `idea/proposal.md` from `templates/proposal.md.tmpl`
+3. Allocate the branch-specific private attempt from the repository root and
+   retain the JSON output for finalization:
+   ```
+   python scripts/init_foundation_attempt.py \
+     --project-dir workspace/projects/{project-name} \
+     --owner hep-idea --mode initialize --format json
+   ```
+   Use `--mode revise` for Branch II and `--mode direct` for Branch III.
+   Do not continue if allocation fails. Never guess or reconstruct the returned
+   `attempt_dir`, `attempt_id`, or `candidate_dir`.
+4. Create `idea/proposal.md` below the returned `candidate_dir` from
+   `templates/proposal.md.tmpl`.
    - Fill every placeholder with project-specific content
    - Write in English, academic style
    - Use LaTeX notation for equations (`$...$`, `$$...$$`) where appropriate
@@ -173,9 +187,10 @@ Write this file first. It is the machine-readable source of truth for downstream
 
 **Hard rules for model-spec.json:**
 - For initial hep-idea output, set `version` to `"v1"`.
-- All parameter names use **canonical name** convention: ASCII letters, digits, underscores only. No LaTeX commands, Unicode, prime symbols, or curly braces.
-- Each canonical name is unique and immutable within the project.
-  calc-tasks.json, and all future downstream files (result-meta.json, result-python.py, constraints-data.json) must use the exact same canonical names.
+- Machine-readable canonical names must match `^[A-Za-z_][A-Za-z0-9_]*$`
+  and must not be Python hard keywords; each name is project-global and
+  immutable, and downstream artifacts must reuse it exactly. See
+  `docs/contracts/canonical-name-convention.md`.
 
 #### File 2: `model/calc-tasks.json`
 
@@ -192,7 +207,8 @@ Decomposition logic:
 
 #### Post-write review
 
-After generating both model files, write them to the workspace immediately.
+After generating both model files, write them below the allocated
+`candidate_dir` immediately.
 
 Then present a summary of `model-spec.json` and `calc-tasks.json` to the user. Highlight:
 - The model definition (fields, interactions, conventions)
@@ -200,7 +216,8 @@ Then present a summary of `model-spec.json` and `calc-tasks.json` to the user. H
 - Parameter names and ranges
 
 Pause here for user confirmation before proceeding to constraints and benchmarks, unless the user has explicitly asked for a fully end-to-end run without intermediate review.
-If the user requests changes at this stage, revise the model and task decomposition in place before continuing.
+If the user requests changes at this stage, revise only the private candidate
+before continuing.
 
 ### Step 5c - Experimental constraints collection
 
@@ -236,7 +253,10 @@ Write this file before `constraints/constraints-summary.md`. It is the machine-r
 Treat `computed_by` and `implementation_status` as two independent labels:
 - first decide where the theory quantity comes from
 - then decide whether hep-numerics can use the constraint automatically right now
-- if interpolation is needed, use `interpolated` only when the local asset already exists under `workspace/projects/{project-name}/constraints/` and the interpolation metadata is complete; otherwise use `manual_only`
+- if interpolation is needed, use `interpolated` only when the required local
+  asset is present below the candidate `constraints/` tree (seeded from the
+  project for a revision) and the interpolation metadata is complete; otherwise
+  use `manual_only`
 
 **Hard rules:**
 - All parameter names in constraints-data.json must use the same
@@ -289,17 +309,38 @@ Structured benchmark data. Use `templates/benchmarks.example.json` as the local 
 - For novel or niche calculations, it is acceptable to have `has_benchmark: false`, but always provide at least a limiting-case check or a numerical cross-reference suggestion in `notes`
 - When citing formulas, convert them to the conventions in model-spec.json whenever this can be done reliably. If a reliable conversion is not possible, note the remaining convention difference explicitly and treat the benchmark as limited-scope rather than fully comparable.
 
-### Step 5e - Write manifest.json
+### Step 5e - Author and publish manifest.json
 
-Write `workspace/projects/{project-name}/manifest.json` only after
-Steps 5a-5d have successfully written their own outputs. Do not create `manifest.json` earlier as a placeholder. The file should initialize `idea`, `model`, and `constraints` artifacts all marked as done:
+Write `manifest.json` only below the returned `candidate_dir`, and only after
+Steps 5a-5d have successfully authored their candidate outputs. Do not create
+it earlier as a placeholder. The initial candidate should mark `idea`, `model`,
+and `constraints` artifacts as done:
 
 Use `templates/manifest.example.json` as the local canonical shape
 reference for this skill. For the authoritative artifact contract - initial
 hep-idea file lists, producer fields, checksum rules, and history entries - read
 `references/manifest-json-contract.md`.
 
-### After writing all files, tell the user:
+The template contains schema-valid example values. Replace its project name,
+dates, timestamps, and checksum sentinel with values from the current project;
+never copy those example literals into a generated manifest.
+
+Finalize the exact allocated attempt from the repository root:
+
+```
+python scripts/finalize_foundation_attempt.py \
+  --project-dir workspace/projects/{project-name} \
+  --attempt-dir {returned-attempt-dir} \
+  --attempt-id {returned-attempt-id} \
+  --owner hep-idea --mode {initialize|revise|direct} --format json
+```
+
+Do not copy candidate files to the project yourself. Report authoritative
+completion only when the finalizer returns `published` or a verified
+`already_published`. Any other result preserves the prior generation and must
+be reported as a failed or blocked publication.
+
+### After successful finalization, tell the user:
 - Summarize the proposal in 2-3 sentences
 - Summarize the model definition (particle content, key interactions)
 - Summarize the calculation task list (how many tasks, what they compute)
@@ -354,8 +395,8 @@ Revision flow:
 2. Identify which artifacts the user wants changed. The editable set is:
    `model/model-spec.json`, `model/calc-tasks.json`,
    `constraints/constraints-data.json`, and `model/benchmarks.json`.
-3. Read only the artifacts implicated by the user's request, then apply the
-   requested changes in memory before writing anything back.
+3. Allocate one `hep-idea:revise` foundation attempt. Read and edit only the
+   implicated files in its seeded `candidate_dir`; do not write live artifacts.
 4. If the request changes parameter names or parameter references in
    `model-spec.json` or `calc-tasks.json`, enforce canonical-name compliance
    before writing. Do not introduce aliases, display-name variants, or
@@ -366,21 +407,32 @@ Revision flow:
 Allowed hep-idea history actions for revisions are `model_complete_v{N}`,
 `model_updated`, `constraints_updated`, and `benchmarks_updated`. Use
 `model_complete_v{N}` when the model version is bumped; otherwise use the
-narrow `_updated` action matching the changed artifact.
+narrow `_updated` action matching the changed artifact. When one revision
+changes multiple scopes, append exactly one action for each changed scope; do
+not use one action as a summary label for unrelated changed files. The
+foundation finalizer derives the required action set from the staged/live file
+diff and rejects missing, extra, duplicated, or misclassified actions.
 
-6. Write the updated artifact files back to the workspace, then append a new
-   `manifest.history` entry with `by: "hep-idea"`, one of the allowed revision
-   actions above, and a short note describing the change.
+6. Write updated artifact files only in the candidate, then append one new
+   candidate `manifest.history` entry per changed scope with `by: "hep-idea"`,
+   the exact action required above, and a short note describing that scope.
 7. If the model version changed, also update
    `manifest.artifacts.model.checksum` and `active_model_version` so the rest
    of the workflow can detect staleness correctly.
-8. Report back to the user with three explicit items:
+8. Run the foundation finalizer with the exact allocation tuple. A change to
+   `model-spec.json`, `calc-tasks.json`, or `benchmarks.json` mechanically marks
+   evidence-bearing calculations stale while preserving their historical task
+   registry and dependency. The finalizer also marks affected numerics analyses
+   stale in the same transaction; do not edit `artifacts.calculations` or
+   `artifacts.numerics` yourself.
+9. Report back to the user with three explicit items:
    - what changed
    - whether the model version was bumped
-   - whether downstream `calculations/` results may now be stale or need to
-     be regenerated
+   - whether downstream `calculations/` results are now explicitly stale and
+     need to be regenerated
 
-Branch II is the only branch that should revise existing artifacts in place.
+Branch II is the only branch that may publish revisions to existing artifacts,
+and it does so only through the private attempt plus finalizer.
 Do not silently fall back to "new project" behavior when `manifest.json`
 already exists and the user is clearly asking for a targeted update.
 
@@ -397,12 +449,14 @@ constraints for this setup" rather than "brainstorm a project for me".
 Behavior in this branch:
 
 - Skip Steps 1-4 entirely.
+- Initialize the directory skeleton when necessary, then allocate one
+  `hep-idea:direct` private foundation attempt before authoring any artifact.
 - Go directly to Step 5b when the user has supplied enough model content to
   write `model-spec.json` and `calc-tasks.json`.
 - Go directly to Step 5c when the user mainly provided a constraint-side
   description and wants `constraints-data.json` / `constraints-summary.md`.
 - Do not write `idea/proposal.md`.
-- When writing `manifest.json`, mark `artifacts.idea.status` as `"skipped"`
+- In candidate `manifest.json`, mark `artifacts.idea.status` as `"skipped"`
   and keep its `files` list empty.
 
 If the user provides enough detail for both model formalization and
@@ -433,7 +487,7 @@ existing artifacts, or direct formalization.
 
 - **User gives a very vague direction** (e.g., "I want to do BSM"): Don't refuse. Consult `references/research-directions.md`, pick 3 diverse sub-topics, and present them as the candidate ideas.
 
-- **User wants to continue from a previous project**: Read the conclusions from `workspace/projects/{old-project}/numerics/analysis-summary-{analysis_id}.md` or inspect `workspace/projects/{old-project}/paper/` if later paper assets exist, and derive follow-up questions.
+- **User wants to continue from a previous project**: Read the conclusions from `workspace/projects/{old-project}/numerics/analysis-summary-{analysis_id}.md`; when a reproduction overlay exists, also inspect `workspace/projects/{old-project}/literature/` and `workspace/projects/{old-project}/reproduction/reports/`, then derive follow-up questions.
 
 - **User already has a very specific idea**: Skip Steps 1-4 entirely. Go straight to writing the full proposal. The skill should adapt to the user's level of specificity, not force them through every step.
 

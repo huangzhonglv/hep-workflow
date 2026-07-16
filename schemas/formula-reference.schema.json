@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HEP Formula Reference Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "paper_id",
+    "target_id",
+    "expression",
+    "source_locator",
+    "acquired_at"
+  ],
+  "properties": {
+    "paper_id": {"type": "string", "pattern": "\\S"},
+    "target_id": {"type": "string", "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$"},
+    "expression": {"type": "string", "pattern": "\\S"},
+    "source_locator": {"type": "string", "pattern": "\\S"},
+    "acquired_at": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "notes": {"type": "string"}
+  }
+}

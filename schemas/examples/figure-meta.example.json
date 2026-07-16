@@ -1,0 +1,47 @@
+{
+  "analysis_id": "analysis-001",
+  "generated_at": "2026-07-14T00:00:00Z",
+  "scan_csv_sha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "scan_meta_sha256": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "scan_execution_sha256": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "render_config_snapshot": {
+    "analysis_id": "analysis-001",
+    "model_name": "Example model",
+    "figures": [
+      {
+        "kind": "scan_1d",
+        "x": "mass",
+        "observables": [
+          "rate"
+        ]
+      }
+    ]
+  },
+  "renderer": {
+    "name": "hep-numerics/make_figures.py",
+    "contract_version": 1
+  },
+  "outputs": [
+    {
+      "path": "numerics/figures/analysis-001/scan1d-mass-rate.pdf",
+      "sha256": "sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
+    },
+    {
+      "path": "numerics/figures/analysis-001/scan1d-mass-rate.png",
+      "sha256": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    }
+  ],
+  "input_provenance": {
+    "version": "sha256-bytes-v1",
+    "verification_status": "verified",
+    "entries": [
+      {
+        "scope": "repository",
+        "role": "figure-renderer",
+        "path": ".agents/skills/hep-numerics/scripts/make_figures.py",
+        "sha256": "sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      }
+    ],
+    "root_sha256": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+  }
+}

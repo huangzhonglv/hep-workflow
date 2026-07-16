@@ -7,15 +7,6 @@ description: >
   exclusion plot, run numerics, validate scan-config,
   rerun an analysis, replot figures, scan.csv/scan.meta inspection, or
   custom observable wiring in a HEP phenomenology project.
-trigger:
-  - numerical scan
-  - exclusion plot
-  - run numerics
-  - run scan
-  - validate scan-config
-  - replot
-  - scan results
-license: Unspecified; follow repository policy
 ---
 
 # HEP Numerics
@@ -28,7 +19,8 @@ constraint decisions, figures, summaries, and manifest updates.
 
 - Responsible: read existing workspace artifacts, validate scan-configs, run numeric scans, evaluate constraints, make figures, write summaries, and update numerics manifest entries.
 - Responsible: preserve reproducibility through `scan.csv`, `scan.meta.json`, deterministic figure names, and manifest history.
-- Responsible: distinguish hard failures from skipped points, skipped constraints, and skipped figures.
+- Responsible: distinguish hard failures from skipped evaluations and skipped
+  figures without publishing an incomplete scan as a successful result.
 - Not responsible: inventing physics, changing model assumptions, changing experimental data, or deciding whether a model is publishable.
 - Not responsible: symbolic derivations, Feynman rules, loop reductions, or Package-X work.
 - Not responsible: silently editing `model/`, `constraints/`, or `calculations/` to make a scan pass.
@@ -83,13 +75,17 @@ Choose the branch from user intent after mode classification.
 | --- | --- | --- | --- |
 | Branch I full analysis | "run a new analysis", "scan this project", "make a scan-config and run" | None | `numerics_analysis_complete` |
 | Branch II rerun | "rerun analysis-001", "same config, refresh scan", "rerun scan" | Skip Step 1 only when config already exists | `numerics_analysis_rerun` |
-| Branch III replot-only | "replot", "make figures again", "change figure style" | Skip Step 1, Step 2 scan preflight only if existing results already pass, and Step 3 | `numerics_figures_regenerated` |
+| Branch III replot-only | "replot", "make figures again" | Skip Step 1 and Step 3; Step 2 verifies the immutable scan pair/frozen execution snapshot and builds separate renderer provenance | `numerics_figures_regenerated` |
 
 Branch rules:
 
 - Branch I creates or completes the scan-config, validates it, runs the scan, makes figures, writes summary, and updates manifest.
 - Branch II reuses the existing scan-config but reruns validation, scan, figures, summary, and manifest update.
-- Branch III must reuse existing `scan.csv` and `scan.meta.json`; it may update figures, summary, and manifest only.
+- Branch III must reuse an existing strictly verified `scan.csv` and
+  `scan.meta.json`. Its live execution projection must match the stored
+  snapshot. Title/prose and `parallelism`-hint drift may be rendered under a
+  new `figures.meta.json`; scientific figure/config drift requires a new scan.
+  It may update figures, figure provenance, summary, and manifest only.
 - If the user asks to change model, constraints, or calculations, stop and route that work outside this skill.
 
 ## 5. Hard Gates
@@ -99,25 +95,32 @@ Branch rules:
 - Replot does not scan: Branch III must not call `run_scan.py`.
 - Do not mutate upstream: never edit `model/`, `constraints/`, or `calculations/` to satisfy numerics validation.
 - Do not invent dependencies: stale or missing `depends_on` entries are hard blockers unless the user asks for a new config.
+- Recompute and verify dependencies: matching version/checksum strings are not
+  proof. The model hash, every task calculation graph, the scan CSV hash, and
+  the complete scan graph must verify from exact current bytes before use.
 - Do not invent canonical names: unknown machine names are validation errors.
-- Do not hide skipped work: skipped constraints, observables, points, or figures need explicit reasons in outputs.
+- Do not hide skipped work: skipped constraints, observables, or points need
+  explicit failure diagnostics; skipped figures need explicit recorded reasons.
+- Fail closed on incomplete point evidence: if any attempted point has an
+  unavailable/non-finite observable, invalid/non-finite constraint result, or
+  `skipped` constraint/verdict, `run_scan.py` exits nonzero before writing or
+  refreshing `scan.csv`, `scan.meta.json`, the analysis summary, or manifest
+  history. In-memory skip reasons are diagnostics, not a publishable partial
+  scan.
+- Numeric evidence must be a real finite scalar. Booleans, arrays, `NaN`, and
+  positive/negative infinity are invalid even when Python can coerce them.
 
 ## 6. Canonical Name Rule
 
-Machine-readable names must be ASCII canonical names from `model/model-spec.json`.
-
-- Canonical source: `model-spec.json.parameters[].name`.
-- Display source: `model-spec.json.parameters[].latex`.
-- Required in scan-config: `scan_parameters[].name`, `fixed_parameters[].name`, observable parameter references, constraint parameter references, figure axes, and custom observable keyword arguments.
-- Forbidden in machine fields: LaTeX, Unicode symbols, primes, subscripts, superscripts, spaces, and display labels.
-- Conversion flow:
-  - Read `model-spec.json.parameters[]`.
-  - Build a lookup from canonical `name` and known `latex` display labels.
-  - Convert user-provided display text to the existing canonical `name`.
-  - If multiple canonical names match, ask before writing.
-  - If no canonical name matches, reject the config field instead of inventing an alias.
-- Keep labels for humans only: axis labels and figure legends may use `latex`, but filenames and CSV columns use canonical names.
-- Preserve canonical names in custom observables; function parameters must match the canonical keyword arguments used by `run_scan.py`.
+Machine-readable canonical names must match `^[A-Za-z_][A-Za-z0-9_]*$`
+(ASCII letter or underscore first), must not be a Python hard keyword, and
+must reuse the exact
+`model-spec.json.parameters[].name` values; see
+`docs/contracts/canonical-name-convention.md`. Resolve display input only
+through `parameters[].latex`; if no unique existing name matches, stop instead
+of inventing an alias. Human labels may use `latex`, but machine fields,
+filenames, CSV columns, figure axes, and custom-observable keyword arguments
+use canonical names.
 
 ## 7. Manifest Updates And History Actions
 
@@ -133,20 +136,48 @@ Allowed history actions for this skill:
 - `numerics_analysis_rerun`
 - `numerics_figures_regenerated`
 
-History entries MAY include an optional `analysis_id` field to associate them with a specific numerics analysis. The field is defined by `schemas/manifest.schema.json` and documented in [`references/scan-results-contract.md`](references/scan-results-contract.md) under "Manifest History Entry Fields (Cross-Reference)". Consumers fall back to parsing `analysis_id=<id>` from the `note` string when the field is absent, so producers may use either form.
+New history entries MUST include an explicit `analysis_id` and a fresh
+32-character lowercase-hex `event_id`. The fields are defined by
+`schemas/manifest.schema.json` and documented in
+[`references/scan-results-contract.md`](references/scan-results-contract.md)
+under "Manifest History Entry Fields (Cross-Reference)". Consumers may parse
+one exact `analysis_id=<id>` note token or accept a missing event ID only when
+reading legacy history; current producers never use those compatibility paths.
 
 Manifest rules:
 
+- Require `manifest_version = 2`. `artifacts.numerics.analyses` contains
+  analysis-owned objects, never string IDs. Each object owns its exact files,
+  dependency snapshot, producer, timestamp, and status; the aggregate is only
+  the deterministic projection defined by
+  `docs/contracts/numerics-manifest-ownership.md`.
+- Merge one analysis without rewriting unrelated analysis entries. The only
+  permitted unrelated-field transition is `done`/`partial` to `stale` after an
+  exact recorded dependency drifts; stale evidence must still pass intrinsic
+  scan-pair and graph structure/coverage validation.
 - Manifest artifact paths must match files that exist on disk.
 - A full or rerun analysis should point to the scan-config, scan-results, figures, and summary.
 - A replot-only update must not claim a new scan was run.
+- `status` and history actions are declarations, not evidence. Publish `done`
+  only after all configured scan/summary/figure evidence and verified graphs
+  pass their mechanical validators.
 - Do not add new history action names without updating schemas, scripts, tests, and references.
+- Build the candidate with `build_manifest_for_numerics`; do not directly write
+  through a legacy updater. `run_scan.py` / `make_figures.py` publish scan or
+  figure candidates and the manifest in one shared transaction, manifest last.
+  The shared serializer rejects paths outside private transaction staging.
+- If a command reports an incomplete publication journal, inspect it with
+  `python3 scripts/recover_publication_transactions.py --project-dir <project>
+  --format json`; use `--recover` only after reviewing the typed outcome.
 
 ## 8. Common Script Commands
 
 Run commands from the repository root unless the user gives another root.
 
-- `python3 <skill_dir>/scripts/init_analysis.py --project-dir <project> --analysis-id <analysis_id>`
+- `python3 <skill_dir>/scripts/init_analysis.py --project-dir <project>` (allocate a new owned ID)
+- `python3 <skill_dir>/scripts/init_analysis.py --project-dir <project> --allow-formula-fallback` (explicitly opt a new draft into detected formula-fallback task backends)
+- `python3 <skill_dir>/scripts/init_analysis.py --project-dir <project> --reuse-draft` (explicitly open the newest unexecuted initializer draft)
+- `python3 <skill_dir>/scripts/init_analysis.py --project-dir <project> --analysis-id <analysis_id> --resume-attempt <attempt_id>` (authenticated interrupted-attempt resume)
 - `python3 <skill_dir>/scripts/validate_scan_config.py --project-dir <project> --analysis-id <analysis_id>`
 - `python3 <skill_dir>/scripts/run_scan.py --project-dir <project> --analysis-id <analysis_id>`
 - `python3 <skill_dir>/scripts/make_figures.py --project-dir <project> --analysis-id <analysis_id>`
@@ -205,9 +236,15 @@ Inputs:
 - `calculations/`
 Do:
 - Run schema and semantic validation.
-- Check `depends_on` versions, checksums, and task ids.
+- Recompute the model checksum and independently verify exact-byte calculation
+  dependency graphs in addition to checking versions and task ids.
 - Check scan/fixed parameter conflicts.
 - Check observable and constraint implementation readiness.
+- For custom derived observables, require exact `source.task_ids` parity and
+  smoke-test the real immutable task-output wrappers.
+- Validate interpolation headers, finite ordered nodes, units, support, and
+  explicit extrapolation policy.
+- Reject ambient RNG/entropy; stochastic callables must accept the local `rng`.
 - Reject formula fallback task backends unless the scan-config explicitly sets
   `allow_formula_fallback: true`.
 Script:
@@ -227,9 +264,15 @@ Inputs:
 - Custom observables if declared
 Do:
 - Execute the parameter grid.
+- Derive independent local PCG64 smoke/scan, point, and consumer substreams
+  from the required seed; never seed global state.
+- Build the complete exact-byte scan dependency graph before execution and
+  reverify the same expected coverage immediately before publication.
 - Compute observable columns.
 - Evaluate each configured constraint.
-- Record skip reasons instead of dropping rows.
+- Retain diagnostic skip/failure reasons in memory while evaluating all points.
+- Before any output or manifest mutation, require every attempted point to have
+  finite observable evidence and a complete `allowed` or `excluded` status.
 Script:
 - `scripts/run_scan.py`
 - `references/constraint-evaluation.md`
@@ -241,6 +284,10 @@ Hard fail:
 - Branch III selected.
 - Config was not validated first.
 - Required observable code raises a hard blocker.
+- Any attempted point or configured constraint is skipped, unavailable,
+  malformed, boolean-valued, or non-finite. The failed run publishes no scan
+  pair, summary, or manifest history.
+- Any input graph drift between preflight and publication.
 
 ### Step 4 — Make Figures
 
@@ -251,8 +298,17 @@ Inputs:
 - `model/model-spec.json`
 Do:
 - Render every supported figure spec.
+- Verify the strict scan pair, its CSV checksum, exact source/snapshot, frozen
+  execution projection, and scan graph before loading rows or writing a figure.
+- Build `figures.meta.json` over the live rendering request, immutable scan
+  hashes, exact outputs, renderer/helpers, schemas, model, and constraints.
 - Use canonical names for file names and data lookup.
 - Use labels and units for human-facing axes.
+- For every figure, select exactly one slice by requiring `figures[].fixed` to
+  name every hidden scan axis and no other axis. Match fixed values by exact
+  numeric equality; do not use nearest/isclose matching.
+- Reject duplicate coordinates on the selected slice. Do not aggregate,
+  median-reduce, choose a first row, or drop duplicates.
 - Continue past per-figure skips only when the reason is recorded.
 Script:
 - `scripts/make_figures.py`
@@ -260,6 +316,7 @@ Script:
 Outputs:
 - `numerics/figures/{analysis_id}/*.pdf`
 - `numerics/figures/{analysis_id}/*.png`
+- `numerics/figures/{analysis_id}/figures.meta.json`
 Hard fail:
 - Required scan result files are missing.
 - A figure requests unknown axes, observables, or constraint columns.
@@ -292,7 +349,9 @@ Inputs:
 - Existing `manifest.json`
 - Selected branch
 Do:
-- Register scan-config, scan-results, figures, and summary paths.
+- Upsert only this analysis's ownership object; preserve every unrelated
+  analysis object and register this scan-config, scan-results, figures, and
+  summary paths.
 - Use the branch's allowed history action.
 - Keep manifest paths relative to the project root.
 Script:
@@ -303,6 +362,9 @@ Outputs:
 Hard fail:
 - Any manifest path points to a missing file.
 - Any history action is outside the allowed list.
+- The existing manifest is version 1 or contains string analysis IDs; diagnose
+  with `scripts/migrate_manifest_v2.py` and never migrate implicitly.
+- A retained analysis entry, dependency snapshot, or owned path would be lost.
 
 ### Step 7 — Self-Check And Deliver
 
@@ -342,15 +404,31 @@ Hard fail:
 - [ ] `analysis_id` is known and matches output paths.
 - [ ] `scan-config.json` exists for the selected analysis.
 - [ ] All machine-readable parameter names are canonical ASCII names.
+- [ ] Canonical identifiers start with a letter/underscore and are not Python
+      hard keywords.
 - [ ] No upstream `model/`, `constraints/`, or `calculations/` file was modified.
 - [ ] `validate_scan_config.py` passed before any scan run.
 - [ ] Hard preflight failures stopped before scan-results were written.
+- [ ] Any point-level failure, skipped verdict, unavailable value, boolean, or
+      non-finite value caused a nonzero run with no refreshed scan outputs,
+      summary, or manifest history.
 - [ ] `scan.csv` exists when the selected branch requires scan results.
 - [ ] `scan.csv` row and column contracts match the config.
-- [ ] Every configured observable has a column or a recorded skip/failure reason.
+- [ ] `scan.csv` has one unique complete Cartesian grid, exact finite cells,
+      and a matching `scan_csv_sha256`.
+- [ ] Every configured observable has a complete finite scalar column; a
+      recorded skip/failure reason was not treated as successful scan output.
 - [ ] Every configured constraint has `verdict`, `margin`, `chi2`, and `skip_reason` columns.
-- [ ] `scan.meta.json` contains the scan-config snapshot and reproducibility metadata.
+- [ ] Every persisted constraint verdict is `allowed` or `excluded`; completed
+      scan output contains no skipped verdict.
+- [ ] `scan.meta.json` contains an exact scan-config snapshot, reproducibility
+      source/hash, explicit RNG metadata, and a verified graph whose
+      independently derived coverage and hashes pass.
 - [ ] Figures exist for each required figure spec or a skip reason is recorded.
+- [ ] `figures.meta.json` owns exactly the current figure generation and all
+      scan/renderer/output hashes verify.
+- [ ] Each figure explicitly fixes exactly every hidden scan axis, uses exact
+      slice equality, and contains no duplicate selected coordinates.
 - [ ] `analysis-summary-{analysis_id}.md` exists and is nonempty when summary generation is in scope.
 - [ ] `manifest.json` paths match files on disk.
 - [ ] Manifest history action is one of the three allowed numerics actions.

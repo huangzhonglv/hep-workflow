@@ -89,6 +89,7 @@ def scan_config_factory(
                     "kind": "scan_1d",
                     "x": "M_Hpp",
                     "observables": ["BR_toy"],
+                    "fixed": {"v_Delta": 1.0e-3},
                     "overlay_constraint_bands": True,
                 },
             ],

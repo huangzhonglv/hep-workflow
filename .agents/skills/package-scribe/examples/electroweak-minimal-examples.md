@@ -91,7 +91,7 @@ totalResult = totalPart /. scalarizeRules /. onShell // LoopRefine;
   every electroweak case with masses / CKM / general `R_\[Xi]`
 - This example does not separately test the overall vertex sign. The current
   project's overall `+i (g/\sqrt{2})` convention for `Wff'` is fixed by
-  `standard-theories.md` and the repository-root `SM-FeynmanRules.pdf`
+  `standard-theories.md`
 - If final-state fermion masses are kept, the longitudinal term generally no
   longer vanishes automatically
 - If the user switches to another Z/W chirality or axial convention, state that
@@ -182,7 +182,7 @@ interferenceKernel = Contract[eTrace muTrace] /. kinematics // LoopRefine;
   `\gamma ff` / `Zff` in neutral-current tree diagrams**
 - It does not separately fix conventions such as overall field redefinitions.
   The project's absolute sign conventions are still those in
-  `standard-theories.md` and the repository-root `SM-FeynmanRules.pdf`
+  `standard-theories.md`
 - If external masses are retained, or if observables such as forward-backward
   asymmetries are analyzed next, modify the on-shell relations and coupling
   definitions accordingly

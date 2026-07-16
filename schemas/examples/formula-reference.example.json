@@ -1,0 +1,8 @@
+{
+  "paper_id": "arxiv:2601.01234v2",
+  "target_id": "formula-delta-amu",
+  "expression": "delta_a_mu = (g_prime^2 / 8 pi^2) F(M_Zp / m_mu)",
+  "source_locator": "Equation (12)",
+  "acquired_at": "2026-07-13T00:00:00Z",
+  "notes": "Verbatim symbolic structure transcribed for human comparison."
+}

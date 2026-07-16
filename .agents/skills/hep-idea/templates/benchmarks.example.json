@@ -1,11 +1,11 @@
 {
-  "model_name": "...",
+  "model_name": "U(1)_{L_mu - L_tau}",
   "benchmarks": [
     {
       "task_id": "task-001",
       "observable": "delta_a_mu",
       "has_benchmark": true,
-      "formula_latex": "\\Delta a_\\mu = \\frac{g'^2}{8\\pi^2} \\int_0^1 dx \\frac{...}{...}",
+      "formula_latex": "\\Delta a_\\mu = \\frac{g'^2}{8\\pi^2} \\int_0^1 dx \\frac{2x(1-x)^2}{(1-x)^2 + x r}",
       "formula_description": "Standard one-loop vector-boson contribution to muon g-2. Valid for pure vector coupling.",
       "known_limits": [
         {
@@ -34,14 +34,8 @@
     },
     {
       "task_id": "task-002",
-      "observable": "...",
+      "observable": "vertex_form_factor",
       "has_benchmark": false,
-      "formula_latex": null,
-      "formula_description": null,
-      "known_limits": [],
-      "numerical_test_point": null,
-      "sources": [],
-      "source_type": null,
       "notes": "No closed-form result found. Consider checking numerical agreement with MadGraph or comparing with other tools."
     }
   ]

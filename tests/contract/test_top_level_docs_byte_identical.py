@@ -21,3 +21,10 @@ def test_top_level_docs_use_lf_only():
     for name in ("CLAUDE.md", "AGENTS.md"):
         content = (REPO_ROOT / name).read_bytes()
         assert b"\r\n" not in content, f"{name} contains CRLF; convert to LF"
+
+
+def test_top_level_docs_route_manifest_writes_to_documented_owner():
+    for name in ("CLAUDE.md", "AGENTS.md"):
+        text = (REPO_ROOT / name).read_text(encoding="utf-8")
+        assert "dispatching the documented skill/script owner for\n  writes" in text
+        assert "read/update `manifest.json`" not in text

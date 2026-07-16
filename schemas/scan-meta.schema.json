@@ -13,7 +13,7 @@
   "$defs": {
     "analysis_id": {
       "type": "string",
-      "pattern": "^analysis-\\d{3}$"
+      "pattern": "^analysis-[0-9]{3}$"
     },
     "checksum": {
       "type": "string",
@@ -77,7 +77,7 @@
       "properties": {
         "task_id": {
           "type": "string",
-          "pattern": "^task-\\d{3}$"
+          "pattern": "^task-[0-9]{3}$"
         },
         "observable": {
           "type": [
@@ -107,9 +107,12 @@
         "analysis_id",
         "history_action",
         "scan_config_snapshot",
+        "scan_config_source",
+        "scan_config_sha256",
         "model_version",
         "model_checksum",
         "seed",
+        "rng",
         "started_at",
         "finished_at",
         "timing_seconds",
@@ -120,7 +123,9 @@
         "n_skipped",
         "environment",
         "formula_fallbacks",
-        "warnings"
+        "warnings",
+        "scan_csv_sha256",
+        "input_provenance"
       ],
       "properties": {
         "analysis_id": {
@@ -132,15 +137,27 @@
         "scan_config_snapshot": {
           "type": "object"
         },
+        "scan_config_source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Exact UTF-8 scan-config source bytes decoded as text at execution time."
+        },
+        "scan_config_sha256": {
+          "$ref": "#/$defs/checksum"
+        },
         "model_version": {
           "type": "string",
-          "pattern": "^v\\d+$"
+          "pattern": "^v[0-9]+$"
         },
         "model_checksum": {
           "$ref": "#/$defs/checksum"
         },
         "seed": {
-          "type": "integer"
+          "type": "integer",
+          "minimum": 0
+        },
+        "rng": {
+          "$ref": "#/$defs/rng_contract"
         },
         "started_at": {
           "$ref": "#/$defs/timestamp"
@@ -186,10 +203,67 @@
             "type": "string"
           }
         },
+        "scan_csv_sha256": {
+          "$ref": "#/$defs/checksum"
+        },
+        "input_provenance": {
+          "$ref": "#/$defs/dependency_graph"
+        },
         "scan_parameters": {
           "type": "array",
           "items": {
             "type": "object"
+          }
+        }
+      }
+    },
+    "rng_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "algorithm",
+        "algorithm_version",
+        "substream_scheme",
+        "seed",
+        "substreams",
+        "consumers"
+      ],
+      "properties": {
+        "algorithm": {
+          "const": "numpy.random.PCG64"
+        },
+        "algorithm_version": {
+          "const": "pcg64-v1"
+        },
+        "substream_scheme": {
+          "const": "numpy-seedsequence-v1"
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "substreams": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "smoke",
+            "scan"
+          ],
+          "properties": {
+            "smoke": {
+              "const": 0
+            },
+            "scan": {
+              "const": 1
+            }
+          }
+        },
+        "consumers": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
           }
         }
       }
@@ -199,7 +273,9 @@
       "required": [
         "analysis_id",
         "description",
-        "generated_at"
+        "generated_at",
+        "scan_csv_sha256",
+        "input_provenance"
       ],
       "properties": {
         "analysis_id": {
@@ -211,6 +287,12 @@
         },
         "generated_at": {
           "$ref": "#/$defs/timestamp"
+        },
+        "scan_csv_sha256": {
+          "$ref": "#/$defs/checksum"
+        },
+        "input_provenance": {
+          "$ref": "#/$defs/dependency_graph"
         },
         "source_analysis": {
           "type": "string"
@@ -293,6 +375,131 @@
         }
       ],
       "additionalProperties": true
+    },
+    "dependency_graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "verification_status"
+      ],
+      "properties": {
+        "version": {
+          "const": "sha256-bytes-v1"
+        },
+        "verification_status": {
+          "enum": [
+            "verified",
+            "legacy-unverified"
+          ]
+        },
+        "entries": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/dependency_entry"
+          }
+        },
+        "root_sha256": {
+          "$ref": "#/$defs/checksum"
+        },
+        "reason": {
+          "type": "string",
+          "pattern": "\\S"
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "verification_status": {
+              "const": "verified"
+            }
+          },
+          "required": [
+            "entries",
+            "root_sha256"
+          ],
+          "not": {
+            "required": [
+              "reason"
+            ]
+          }
+        },
+        {
+          "properties": {
+            "verification_status": {
+              "const": "legacy-unverified"
+            }
+          },
+          "required": [
+            "reason"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "entries"
+                ]
+              },
+              {
+                "required": [
+                  "root_sha256"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "dependency_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope",
+        "role",
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "scope": {
+          "enum": [
+            "project",
+            "repository"
+          ]
+        },
+        "role": {
+          "type": "string",
+          "pattern": "^[^\\s]+$"
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "allOf": [
+            {
+              "pattern": "^[^/\\\\]+(?:/[^/\\\\]+)*$"
+            },
+            {
+              "not": {
+                "pattern": "(^|/)\\.\\.?(/|$)"
+              }
+            },
+            {
+              "not": {
+                "pattern": "^[A-Za-z]:/"
+              }
+            },
+            {
+              "not": {
+                "pattern": "\u0000"
+              }
+            }
+          ]
+        },
+        "sha256": {
+          "$ref": "#/$defs/checksum"
+        }
+      }
     }
   }
 }

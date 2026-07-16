@@ -1,4 +1,5 @@
 {
+  "manifest_version": 2,
   "project_name": "numerics-contract",
   "created": "2026-06-23",
   "last_updated": "2026-06-23",
@@ -20,7 +21,7 @@
         "model/calc-tasks.json",
         "model/benchmarks.json"
       ],
-      "checksum": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "checksum": "sha256:e73be36cb0f1fd01d2544109e7976fbb10fcbe4ff576476a908282a0ac7d7fe8",
       "produced_by": "pytest-fixture",
       "timestamp": "2026-06-23T00:00:00Z"
     },
@@ -33,7 +34,7 @@
       "depends_on": {
         "model": {
           "version": "v1",
-          "checksum": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+          "checksum": "sha256:e73be36cb0f1fd01d2544109e7976fbb10fcbe4ff576476a908282a0ac7d7fe8"
         }
       },
       "produced_by": "pytest-fixture",
@@ -47,7 +48,7 @@
       "depends_on": {
         "model": {
           "version": "v1",
-          "checksum": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+          "checksum": "sha256:e73be36cb0f1fd01d2544109e7976fbb10fcbe4ff576476a908282a0ac7d7fe8"
         }
       },
       "produced_by": "pytest-fixture",
@@ -56,29 +57,39 @@
     "numerics": {
       "status": "done",
       "files": [
-        "numerics/custom_observables.py",
+        "numerics/analysis-summary-analysis-001.md",
         "numerics/scan-configs/analysis-001.json",
         "numerics/scan-results/analysis-001/scan.csv",
-        "numerics/scan-results/analysis-001/scan.meta.json",
-        "numerics/analysis-summary-analysis-001.md"
+        "numerics/scan-results/analysis-001/scan.meta.json"
       ],
-      "depends_on": {
-        "model": {
-          "version": "v1",
-          "checksum": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
-        },
-        "calculations": {
-          "tasks": [
-            "task-001"
-          ],
-          "model_version": "v1"
-        },
-        "constraints": {
-          "checksum": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
-        }
-      },
       "analyses": [
-        "analysis-001"
+        {
+          "analysis_id": "analysis-001",
+          "status": "done",
+          "files": [
+            "numerics/analysis-summary-analysis-001.md",
+            "numerics/scan-configs/analysis-001.json",
+            "numerics/scan-results/analysis-001/scan.csv",
+            "numerics/scan-results/analysis-001/scan.meta.json"
+          ],
+          "depends_on": {
+            "model": {
+              "version": "v1",
+              "checksum": "sha256:e73be36cb0f1fd01d2544109e7976fbb10fcbe4ff576476a908282a0ac7d7fe8"
+            },
+            "calculations": {
+              "tasks": [
+                "task-001"
+              ],
+              "model_version": "v1"
+            },
+            "constraints": {
+              "checksum": "sha256:e7a517760f146e133194bbcbbd7d17cee714df778355456784141b6f6d0137b5"
+            }
+          },
+          "produced_by": "pytest-fixture",
+          "timestamp": "2026-06-23T00:00:00Z"
+        }
       ],
       "produced_by": "pytest-fixture",
       "timestamp": "2026-06-23T00:00:00Z"

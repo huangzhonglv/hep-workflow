@@ -47,6 +47,19 @@ fallback must not be written as a usable backend; instead output
 numerics to run an existing fallback backend; it does not authorize
 package-scribe to generate a fallback backend.
 
+**Static derivation evidence is necessary but not sufficient.** A
+`package_x_derived` result must bind the final `result.wl` and
+`result-python.py` bytes, the executable Package-X-to-result-symbol dataflow,
+and the Python function interface in `result-meta.json.derivation_evidence`.
+Method names in prose, comments, strings, or dead `If[False, ...]` branches are
+not evidence. Phase 0 can validate this structure statically, but it cannot
+mechanically prove that the Wolfram result was executed and translated into the
+Python backend without substitution. Consequently a reproduction comparator
+must conservatively classify even a statically valid `package_x_derived`
+result as `unknown` with reason `derivation_evidence_not_runtime_verified` and
+cap a positive comparison at `needs_human_review`. Do not describe static
+validation alone as an independent reproduction.
+
 Generated code uses full `\[Name]` forms (not notebook glyphs) and English comments.
 
 **Work step by step.** Do not jump directly to code. Execute the steps below in
@@ -158,15 +171,22 @@ calculation backend.
 
 In batch mode, the output directory is **fixed** to `calculations/{task_id}/`
 (relative to `workspace/projects/{project-name}/`) and
-`scripts/next-package-result-dir.sh` is **not** called.
+`scripts/next_package_result_dir.py` is **not** called.
 
 If that directory already exists (for example when rerunning a task), use this
 policy:
 - If the directory already has `result-meta.json` and its
   `depends_on.model_version` matches the current manifest `active_model_version`
-  -> treat this as recomputation and directly overwrite the existing files
+  -> treat this as recomputation, but preserve it unchanged as the last-good
+  result until the replacement attempt is complete and validated
 - If the version does not match -> report staleness to the user/orchestrator
-  before overwriting and only overwrite after confirmation
+  before creating the replacement attempt and proceed only after confirmation
+
+Never generate or edit batch artifacts directly in this canonical directory.
+Step 4.5 allocates a private owned attempt; Step 4.7.4 validates and atomically
+publishes the complete task tree together with its manifest status/history
+update. A generation, validation, or publication failure leaves the canonical
+task directory and manifest at their prior coherent generation.
 
 Batch mode does not use the independent-mode numbering mechanism under
 `workspace/package-scribe/package-resultNNN/`.
@@ -267,8 +287,7 @@ has not specified):**
   factors are factored out separately and not hidden inside the Package-X
   numerator
 - For the SM electroweak sector, default to the field definitions and overall
-  sign conventions noted at the end of `references/standard-theories.md`, which
-  are consistent with the repository-root `SM-FeynmanRules.pdf`
+  sign conventions documented in `references/standard-theories.md`
 - If flavor structure exists but the user has not specified it, first use the
   simplest consistent choice (such as diagonal CKM or relevant element set to 1)
   and state it explicitly
@@ -403,19 +422,25 @@ classified by the Step 0 mode into two cases:
 
 #### Step 4.5 (batch mode)
 
-Step 0 has already fixed the output directory as
-`workspace/projects/{project-name}/calculations/{task_id}/`.
+Step 0 has fixed the **final** output directory as
+`workspace/projects/{project-name}/calculations/{task_id}/`, but generation
+must occur only in a new owned attempt directory.
 
 Creation procedure:
-- If the directory does not exist, first create it with `mkdir -p`
-- Run the script in the current skill directory:
-  `zsh scripts/init-package-result-files.sh --task-dir "$taskDir"`
-  (`--task-dir` skips next-dir number allocation and initializes the
-  `request.md` / `result-summary.md` / `run-instructions.md` skeletons directly
-  at the supplied path)
+- Do not create, initialize, or edit `"$taskDir"` directly.
+- Run the initializer in JSON mode:
+  `allocation=$(python3 scripts/init_package_result_files.py --task-dir "$taskDir" --format json)`.
+  It atomically reserves an attempt below the project-local
+  `.hep-workflow-package-attempts/` root without changing `"$taskDir"`.
+- Parse `path` as `resultDir` and `attempt_id` as `attemptId` without `eval`,
+  using the same `python3 -c 'import json,sys; ...'` pattern as the interactive
+  branch below. All Step 4 through Step 4.7 edits and executions use this
+  private `resultDir`.
 - If the current conclusion is `BLOCKED`, instead use
-  `zsh scripts/init-package-result-files.sh --task-dir "$taskDir" --blocked`
-- In batch mode, **do not** call `next-package-result-dir.sh`
+  `python3 scripts/init_package_result_files.py --task-dir "$taskDir" --blocked --format json`.
+  A blocked attempt is diagnostic-only and must not be finalized over a prior
+  good task result.
+- In batch mode, **do not** call `next_package_result_dir.py`
 
 In the batch branch, the "original user request" section of `request.md` is
 generated from the task object: write the task `title`, `process`,
@@ -429,28 +454,41 @@ used" section must list the global conventions read in Step 0.2 (and
 Allocate a new numbered directory under
 `workspace/package-scribe/package-resultNNN/` in the current repository:
 
-- First run the script in the current skill directory:
-  `resultDir=$(bash scripts/next-package-result-dir.sh "$PWD")`
-  to allocate the next directory
-- Then run `zsh scripts/init-package-result-files.sh "$resultDir"` to initialize
+- First run the allocator in JSON mode:
+  `allocation=$(python3 scripts/next_package_result_dir.py --format json "$PWD")`.
+  Read both `path` and `attempt_id` from that JSON; do not discard the ownership
+  token. For shell execution, parse them without `eval`, for example:
+  `resultDir=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["path"])' "$allocation")`
+  and
+  `attemptId=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])["attempt_id"])' "$allocation")`.
+- Then run
+  `python3 scripts/init_package_result_files.py "$resultDir" --attempt-id "$attemptId"`
+  to initialize
   the `request.md` / `result-summary.md` / `run-instructions.md` skeletons
 - If the current conclusion is `BLOCKED`, instead use
-  `zsh scripts/init-package-result-files.sh "$resultDir" --blocked`
+  `python3 scripts/init_package_result_files.py "$resultDir" --attempt-id "$attemptId" --blocked`
 - Here `"$PWD"` may be the repository root or the root of the workspace project
-  currently being processed; `next-package-result-dir.sh` walks upward to locate
+  currently being processed; `next_package_result_dir.py` walks upward to locate
   the repository root and always writes under `workspace/package-scribe/`
 - Do not overwrite existing result directories
+- A failed allocator-owned initialization may be resumed only with the same
+  attempt token. Missing/corrupt reservation metadata remains occupied; never
+  infer ownership from an empty directory.
 
 #### Step 4.5 Common Part (shared by both modes)
 
 - After all result files are completed and before the final user response, run
-  the script in the current skill directory:
-  `zsh scripts/check-package-result-placeholders.sh "$resultDir"`
-  (in batch mode, `$resultDir = calculations/{task_id}/`) to check for remaining
-  `{{...}}` template placeholders
+  the script in the current skill directory. In interactive mode run
+  `python3 scripts/check_package_result_placeholders.py "$resultDir"`. In batch
+  mode the finalizer in Step 4.7.4 performs the placeholder check after it
+  mechanically replaces the temporary input-provenance sentinel; do not run
+  the standalone checker against the pre-finalization sentinel.
 - The initialization script copies skeletons from `templates/*.tmpl` and
   pre-fills deterministic information such as `generated at`, result directory
   paths, and default run commands
+- To use a Wolfram executable that is not available as `wolframscript` on
+  `PATH`, set `WOLFRAMSCRIPT_BIN` to its exact executable path before running
+  the initialization script. Do not include flags or shell syntax.
 
 Every result directory should contain at least:
 
@@ -469,7 +507,9 @@ Every result directory should contain at least:
   - In batch mode, append an additional `## Benchmark Verification` section
     (see Step 4.7)
 - `run-instructions.md`
-  - How to run `wolframscript -file ...`
+  - A `shlex.join`-rendered command for POSIX `sh` / `bash` / `zsh` copy/paste
+  - The structured execution contract
+    `[wolframscript_executable, "-file", result_wl_path]`
 
 **Additionally required in batch mode**:
 - `result-python.py`
@@ -487,6 +527,12 @@ the `wolframscript` command (or execution fails), record the failure reason in
 `wolfram-output.txt` (or represent it by that file's absence) and **do not stop
 the flow**. In batch mode this causes Step 4.7 numerical comparison to degrade to
 `benchmark_status = "skip"` with the reason stated in notes.
+
+Any process/tool execution must pass
+`[wolframscript_executable, "-file", result_wl_path]` as an argv array with no
+shell. Never concatenate executable and file paths into a command string. Only
+`run-instructions.md` renders the same argv with `shlex.join`, and that display
+is POSIX-specific rather than a PowerShell or `cmd.exe` contract.
 
 Even if the current conclusion is `BLOCKED`, still create the result directory
 and write at least:
@@ -601,6 +647,12 @@ intermediate quantities, with canonical-name style naming.
 | Overall translation succeeded but one or more PV functions remain (for example because the task naturally has no small parameter) | `"partial"` |
 | Expression is too complex (Mathematica structure nested too deeply, contains hard-to-translate structures such as `HoldForm` / `Condition`, or contains unknown symbols) | `"failed"` |
 
+`partial` and `failed` are diagnostic attempt states. The current authoritative
+calculation manifest has only task-complete/revised publication semantics, so
+neither state may replace `calculations/{task_id}/` or enter
+`calculations.completed_tasks`. Preserve the owned attempt and report the
+translation limitation instead.
+
 Handling for `"partial"`: write at the relevant location in the Python file:
 ```python
 # TODO: PV function not yet translated
@@ -669,11 +721,27 @@ Fill every field according to these rules:
   hep-numerics may consume an existing fallback backend. If a batch rerun cannot
   produce a real Package-X backend and this invocation has no explicit fallback
   authorization, write `"blocked"` / `"failed"` and make the Python placeholder
-  raise `NotImplementedError`
+  raise `NotImplementedError`. Keep that attempt as diagnostic evidence; the
+  finalizer rejects blocked/partial/failed generations and preserves any prior
+  canonical result and manifest state.
 - `package_x_methods`: list the Package-X methods that actually participate in
   the first draft of `result.wl`, such as `["LoopIntegrate", "LoopRefine",
   "Projector"]` or `["Spur", "Contract", "LoopRefine"]`. For non-Package-X
   backends, write `[]`
+- `derivation_evidence`: required when `calculation_provenance` is
+  `"package_x_derived"`; remove this template object for other provenance
+  values. Fill it only after all Step 4.7 edits are complete:
+  - `source_wl_sha256` and `python_file_sha256` are lowercase SHA-256 values in
+    `sha256:<64 hex>` form for the final current files
+  - `wolfram_result_symbol` names the symbol whose assignment is transitively
+    data-dependent on an executable declared Package-X call
+  - `observable` and `python_function` exactly repeat the corresponding
+    top-level metadata fields
+  - `package_x_methods` exactly repeats the top-level nonempty unique list
+  - the declared Python function must exist, parse, and return a value
+    data-dependent on its function inputs
+  A declaration in comments/strings, an unused Package-X call, a constant
+  Python return, stale hashes, or metadata mismatch invalidates the evidence.
 - `provenance_notes`: one sentence explaining the calculation source; if it is
   not `"package_x_derived"`, explain why it is not Package-X-derived and whether
   it can be used by downstream numerical scans
@@ -681,22 +749,28 @@ Fill every field according to these rules:
   project's `manifest.json`
 - `depends_on.model_checksum`: read `artifacts.model.checksum` from the current
   project's `manifest.json` (for example `"sha256:..."`)
+- `input_provenance`: keep the template's
+  `{{input_provenance_status}}` sentinel unchanged during the first draft. The
+  entire object is replaced only by the verified exact-byte graph in Step
+  4.7.4, after every graph-bound output has reached its final bytes. Never fill
+  only the status string or hand-author dependency entries or hashes.
 - `benchmark_status`: placeholder `null` first; Step 4.7 fills the final value
 
-In batch mode, package-scribe does not directly modify `manifest.json`; the
-orchestrator writes the history action after validating the output. When a
-single new task completes, use `calc_task_{task_id}_complete` (for example
-`calc_task_task-001_complete`); when recomputing or manually revising an
-existing task, use `calc_task_{task_id}_revised`. Use `calculations_updated`
-only for legacy or manual aggregate updates spanning multiple tasks, and the
-history `note` must state the affected tasks.
+In batch mode, the package finalizer owns the calculation manifest merge. It
+publishes the complete task directory and writes `manifest.json` last in the
+same transaction. For a new task it emits `calc_task_{task_id}_complete` (for
+example `calc_task_task-001_complete`); for a recomputation or manual revision
+it emits `calc_task_{task_id}_revised`. The orchestrator validates and reports
+the returned state but must not perform a second manifest read-modify-write.
+`calculations_updated` remains only for a separately authorized legacy/manual
+aggregate update spanning multiple tasks, with a note naming those tasks.
 
-**Canonical name hard constraint (very important)**:
-- Every name appearing in `parameters[].canonical_name` **must** be found exactly
-  in model-spec.json `parameters[].name` (character-for-character match)
-- Automatic rewriting, aliases, and case transformations are not allowed
-- A meta.json that violates this constraint will be rejected by the orchestrator
-  before manifest write
+**Canonical-name hard constraint:** Every `parameters[].canonical_name` must
+match `^[A-Za-z_][A-Za-z0-9_]*$`, must not be Python hard keywords, and
+exactly reuse a `model-spec.json.parameters[].name`; aliases and case
+transformations are forbidden. See
+`docs/contracts/canonical-name-convention.md`. The orchestrator rejects a
+violating `result-meta.json` before manifest write.
 
 #### Step 4.6 Self-Check
 
@@ -709,11 +783,20 @@ Before entering Step 5, confirm:
 - [ ] The `calculation_provenance` field matches the actual derivation path in
       `result.wl`
 - [ ] If `calculation_provenance = "package_x_derived"`, `benchmark_used_as_input`
-      is `false`, and `package_x_methods` is non-empty
+      is `false`, `package_x_methods` is non-empty, and
+      the `derivation_evidence` structure is prepared for the executable
+      Wolfram dataflow, observable, Python function, and exact method list;
+      hashes are finalized only after the last Step 4.7 edit
+- [ ] If provenance is not `package_x_derived`, the package-X-only
+      `derivation_evidence` template object was removed rather than populated
+      with misleading placeholders
 - [ ] If a literature formula or benchmark formula was used as the backend,
       `calculation_provenance` is not `"package_x_derived"`, and the provenance
       downgrade is stated explicitly in the summary
 - [ ] `depends_on.model_version` equals the current `active_model_version`
+- [ ] The `input_provenance` sentinel is still present at this draft stage; it
+      will be replaced by a mechanically built verified graph only after all
+      Step 4.7 edits
 - [ ] If PV expansion was done on the Wolfram side -> expansion code has been
       appended to the end of `result.wl`, and `wolfram-output.txt` contains the
       expanded `finalResultExpanded`
@@ -780,8 +863,9 @@ Execute only when the benchmark has `numerical_test_point`.
      numericCheck = finalResult /. { <inputs converted to Mathematica rules> };
      N[numericCheck, 20]
      ```
-     Run it with `wolframscript -file` and extract the value from
-     `wolfram-output.txt`
+     Run it with structured argv
+     `[wolframscript_executable, "-file", result_wl_path]` (no shell) and
+     extract the value from `wolfram-output.txt`
    - If both paths fail -> `benchmark_status = "skip"`, with the failure reason
      recorded in notes
 3. Compare: `|computed_value - expected_value| <= tolerance` is PASS; otherwise
@@ -863,6 +947,69 @@ Package-X. Whether it is Package-X-derived is determined only by
 - If Step 4.7.1 or 4.7.2 appended code on the Wolfram side, append the
   corresponding code to the end of `result.wl` and preserve the output in
   `wolfram-output.txt`
+- After the last append or edit, recompute
+  `derivation_evidence.source_wl_sha256` and
+  `derivation_evidence.python_file_sha256`. Never retain hashes from the first
+  draft.
+
+#### Step 4.7.4 — Finalize And Verify Exact-Byte Input Provenance
+
+Run this step only after the final Step 4.7 edit to `request.md`,
+`result-summary.md`, `result.wl`, and `result-python.py`, and after finalizing
+the derivation-evidence hashes. A graph built from an earlier draft is stale
+even when the scientific expression did not change.
+
+1. From the repository root, run
+   `python3 scripts/sync_skill_mirrors.py --check`. A mirror mismatch is a hard
+   error because the calculation graph binds both mirrored skill trees and all
+   routed Package-Scribe references, examples, templates, and validation
+   scripts.
+2. Leave the template's complete temporary `input_provenance` object in the
+   attempt; do not hand-author entries or copy hashes from manifest fields. Run
+   the mechanical finalizer from the Package-Scribe skill directory:
+   ```bash
+   python3 scripts/finalize_package_result.py \
+     --task-dir "$taskDir" \
+     --attempt-dir "$resultDir" \
+     --attempt-id "$attemptId" \
+     --format json
+   ```
+3. The finalizer verifies the ownership token and the originally captured
+   last-good task identity, copies the complete candidate into private
+   same-filesystem transaction staging, rejects missing/empty/symlink/special
+   paths and unresolved placeholders, calls `build_dependency_graph` over the
+   exact `calculation_dependency_specs` set from a candidate overlay, replaces
+   the entire temporary provenance object, and then calls
+   `verify_dependency_graph` with
+   `expected_specs=calculation_dependency_specs(` and `allow_legacy=False`.
+   Result schema, derivation evidence, benchmark data, and every live exact-byte
+   dependency must all validate before publication.
+4. While holding the project publication lock, the finalizer merges the current
+   manifest v2 calculation state, emits the task-scoped event with a unique
+   `event_id`, marks dependent current numerics stale on a changed revision,
+   schema-validates the manifest candidate, and publishes the complete task
+   tree, attempt outcome, and manifest (last) through one journaled CAS
+   transaction. Any failure blocks the history update and restores the complete
+   prior task/manifest generation. Do not retry when the finalizer explicitly
+   reports `cleanup_pending=true`; the authoritative publication already
+   committed and only private recovery cleanup remains.
+   If the calculation aggregate was explicitly `stale`, this successful task
+   starts a new current generation: the finalizer resets the current registry,
+   records only this task as completed, leaves every other currently declared
+   task pending, and binds the aggregate to the active model. Untouched task
+   directories remain historical evidence and are not silently promoted.
+5. After success, treat `"$taskDir"` as the result directory for reporting and
+   downstream use. Do not edit it or any graph-bound attempt file after
+   finalization. A blocked, partial, or failed attempt remains diagnostic-only
+   and cannot replace the canonical result or enter `completed_tasks`.
+
+Every newly produced or recomputed `result-meta.json` must therefore end with
+`input_provenance.version = "sha256-bytes-v1"`,
+`input_provenance.verification_status = "verified"`, a nonempty canonical
+`entries` list, and its recomputed `root_sha256`. The
+`legacy-unverified` representation is reserved for explicitly migrated
+historical artifacts; package-scribe must never emit it for a new or recomputed
+result, including a fallback backend.
 
 #### Step 4.7 Self-Check
 
@@ -874,6 +1021,12 @@ Package-X. Whether it is Package-X-derived is determined only by
 - [ ] If the benchmark has known_limits -> the summary section contains the
       benchmark expression and this-work expanded expression side by side for
       each limit
+- [ ] For `package_x_derived`, derivation-evidence hashes match the final files
+      after all benchmark-verification edits
+- [ ] `input_provenance` is a mechanically built `verified` graph over the
+      complete `calculation_dependency_specs` set; verification passed with
+      `allow_legacy=False` after the placeholder check
+- [ ] No graph-bound file changed after the final dependency verification
 
 ### Step 5 — Self-Check + Output
 
@@ -978,8 +1131,9 @@ item. If any item fails, return to Step 4 and fix it.
       written into the result directory
 - [ ] If Wolfram was actually executed -> key output has been saved to
       `wolfram-output.txt`
-- [ ] Ran `zsh scripts/check-package-result-placeholders.sh "$resultDir"` and it
-      passed
+- [ ] Interactive: ran `check_package_result_placeholders.py` and it passed;
+      batch: the owned-attempt finalizer completed its equivalent placeholder,
+      schema, provenance, and atomic manifest-publication checks
 - [ ] File header contains a physics-analysis comment block
 - [ ] Every code block has English comments explaining the physics meaning
 - [ ] For loop-diagram results, normalization factors are clearly stated in
@@ -1012,12 +1166,23 @@ item. If any item fails, return to Step 4 and fix it.
 - [ ] (batch mode only) Generated `result-meta.json`, with
       `calculation_provenance` / `benchmark_used_as_input` / `package_x_methods`
       fields truthfully reflecting the derivation source
+- [ ] (batch mode only) Generated `result-meta.json`, with a newly built
+      exact-byte `input_provenance` graph whose status is `verified`; it is not
+      a `legacy-unverified` compatibility record
 - [ ] (batch mode only) If `calculation_provenance = "package_x_derived"`:
       - The loop task `result.wl` contains a real Package-X loop chain
         (such as `LoopIntegrate` / `LoopRefine` / `Projector`)
       - The tree task `result.wl` contains a real tree-algebra chain
         (such as `Spur` / `Contract` / `LoopRefine`)
       - `benchmark_used_as_input = false`
+      - `derivation_evidence` contains final artifact hashes, the result symbol,
+        matching observable/function/method fields, executable Package-X calls,
+        and a transitive dataflow from those calls to the result symbol
+      - The Python function's return value is data-dependent on its inputs
+- [ ] (batch mode only) Static derivation checks are not reported as proof of
+      runtime-verified independence; until runtime cross-language evidence is
+      implemented, reproduction comparison remains `unknown` /
+      `needs_human_review`
 - [ ] (batch mode only) If a literature formula, benchmark formula, or known
       limit was used as the backend: `calculation_provenance` has been
       downgraded to `literature_formula_imported` or `manual_tree_algebra`, and
@@ -1040,7 +1205,7 @@ item. If any item fails, return to Step 4 and fix it.
    `workspace/package-scribe/package-result007/`; batch mode:
    `calculations/task-001/`)
 3. Complete .wl code
-4. Run instructions (`wolframscript -file xxx.wl`)
+4. POSIX run instructions plus the no-shell structured argv contract
 5. If the user asks for a plot: add numerical export and Python/matplotlib
    plotting instructions
 

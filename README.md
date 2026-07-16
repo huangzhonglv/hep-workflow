@@ -21,7 +21,8 @@ Use it when you want to:
    analysis summaries.
 4. Import a published paper into separate literature and reproduction artifacts,
    compare against reference data mechanically, and keep paper formulas separate
-   from computational backends unless explicitly marked as fallback.
+   from computational backends. An explicitly authorized literature fallback is
+   exploratory only and cannot support an honest reproduction verdict.
 
 `hep-workflow` provides two coordinated workflow surfaces:
 
@@ -37,7 +38,7 @@ Use Python 3.11 or newer. A virtual environment is recommended; mixed system
 scientific Python environments can fail for reasons unrelated to this project.
 
 ```bash
-git clone https://github.com/huangzhonglv/hep-workflow.git
+git clone <repository-url>
 cd hep-workflow
 python3 -m venv .venv
 source .venv/bin/activate
@@ -53,13 +54,20 @@ command works in your terminal, and ensure Package-X can be loaded by Wolfram.
 ### 2. Run the validators
 
 ```bash
+python3 scripts/sync_skill_mirrors.py --check
 python3 scripts/validate_examples.py
 python3 scripts/validate_workspace_projects.py
 python3 -m pytest -q
 ```
 
-If all three return exit code 0, your checkout satisfies the repository's core
-schema, fixture, and test contracts.
+The first command is a read-only mirror precondition; the following three are
+the core semantic validation layers. If all four return exit code 0, your
+checkout satisfies the repository's mirror, schema, fixture, and test
+contracts.
+
+With the development environment active, `make validate` runs the same three
+commands. Use `make test`, `make contract`, or `make e2e` for the corresponding
+focused flow.
 
 The end-to-end tests are gated because they may require `wolframscript`:
 
@@ -89,8 +97,8 @@ and are not part of the public release.
 
 | Agent | Role | Key entry point |
 | --- | --- | --- |
-| [`hep-orchestrator`](./.claude/agents/hep-orchestrator.md) | Coordinates model-first projects, project status, skill dispatch, `manifest.json`, and prerequisite checks | Triggered by "start a new project", "run the full pipeline", "continue my project", "project status" |
-| [`repro-orchestrator`](./.claude/agents/repro-orchestrator.md) | Coordinates paper reproduction requests, `literature/` artifacts, immutable reproduction runs, and `compare_to_reference.py` | Triggered by "reproduce paper", "replicate Fig.", "arXiv paper", "reproduction status" |
+| [`hep-orchestrator`](./.claude/agents/hep-orchestrator.md) | Reads model-first project state, dispatches documented writers, and validates owner-published outputs | Triggered by "start a new project", "run the full pipeline", "continue my project", "project status" |
+| [`repro-orchestrator`](./.claude/agents/repro-orchestrator.md) | Routes typed reproduction prerequisites, invokes the mechanical comparator, and validates owner-published immutable runs | Triggered by "reproduce paper", "replicate Fig.", "arXiv paper", "reproduction status" |
 
 Codex-format agent definitions live under [`.codex/agents/`](./.codex/agents/).
 Skill definitions are mirrored under [`.claude/skills/`](./.claude/skills/) and
@@ -105,36 +113,112 @@ skills. Use the definitions from an agent-capable environment:
   reads `CLAUDE.md`, [`.claude/agents/`](./.claude/agents/), and
   [`.claude/skills/`](./.claude/skills/).
 - **Codex**: open this repository as the working directory. Codex reads
-  `AGENTS.md`, [`.codex/agents/`](./.codex/agents/), and
-  [`.agents/skills/`](./.agents/skills/).
+  `AGENTS.md`, discovers repository skills under
+  [`.agents/skills/`](./.agents/skills/), and makes the project-scoped custom
+  agents in [`.codex/agents/`](./.codex/agents/) available for delegation.
 
 Then ask for a workflow in natural language, for example:
 
 ```text
-start a new project
+use hep-orchestrator to start a new project
 run package-scribe on task-001
-run numerics
-reproduce Fig. 3 of an arXiv paper
+run hep-numerics
+use repro-orchestrator to reproduce Fig. 3 of an arXiv paper
 ```
 
-The orchestrator agents decide which skill to dispatch and validate the
-workspace artifacts they produce.
+Direct requests can invoke a matching skill. Coordinated workflows can delegate
+to `hep-orchestrator` or `repro-orchestrator`, which dispatch the documented
+skill or script owners and validate the resulting workspace artifacts.
+
+## Architecture
+
+The workflow separates LLM-driven orchestration and artifact generation from
+deterministic scripts, schemas, and validators. Skill trees are byte-identical
+between Claude and Codex installations; agent definitions use platform-specific
+formats but remain content-equivalent. Agents read and route project state;
+documented skill or script owners publish scoped manifest changes, and callers
+validate those publications. New calculation, scan, and reproduction outputs
+carry exact-byte dependency graphs that consumers independently verify; see the
+[content-addressed dependency contract](./docs/contracts/content-addressed-dependencies.md).
+
+![HEP workflow architecture showing tools, skills, orchestrators, contracts, and workspace artifacts](./docs/assets/hep-workflow-architecture-current.svg)
+
+## Current guarantees and limits
+
+The current release enforces these workflow properties:
+
+- **Fail-closed inputs.** Repository-controlled JSON trust boundaries reject
+  duplicate keys, invalid UTF-8, `NaN` / `Infinity`, and finite-looking numeric
+  overflow before publishing state. See the
+  [strict JSON contract](./docs/contracts/strict-json.md).
+- **Owner-published state.** Manifest write authority is narrow: foundation
+  skills author owner-scoped private candidates, mechanical finalizers publish
+  them, scripts own derived projections, and orchestrators dispatch and verify
+  rather than performing a second merge. Multi-path writers use lock, journal,
+  compare-and-swap, and manifest-last publication. Load-bearing model/task/
+  benchmark changes preserve prior calculation evidence as explicitly `stale`,
+  and upstream publication derives affected numerics staleness in the same
+  generation; legacy numerics transitions use the explicit
+  `scripts/refresh_numerics_staleness.py` repair. See the
+  [layer-ownership](./docs/contracts/skill-agent-division.md) and
+  [transactional-publication](./docs/contracts/transactional-state-publication.md)
+  contracts.
+- **Reproducible numerics.** Manifest version 2 owns evidence and exact
+  dependencies per analysis. Scans use the versioned `pcg64-v1` local RNG
+  contract, figures bind `figures.meta.json`, and higher-dimensional plots and
+  comparisons accept only an explicitly fixed exact slice. See the
+  [numerics ownership contract](./docs/contracts/numerics-manifest-ownership.md)
+  and [scan-config reference](./.claude/skills/hep-numerics/references/scan-config-json-contract.md).
+- **Typed reproduction routing.** Readiness is a deterministic read-only
+  projection of current evidence; manifest status and history are routing hints,
+  not proof. Formula targets do not consume ambient model, calculation, or scan
+  state. See the
+  [reproduction-readiness contract](./docs/contracts/reproduction-readiness.md).
+- **Honest comparison.** Missing, partial, stale, non-finite, ambiguous, or
+  insufficiently independent evidence cannot become a pass. Tolerances and
+  comparison coverage are declared before results, and completed reproduction
+  runs are immutable. See the
+  [honest reproduction principle](./docs/contracts/honest-reproduction-principle.md).
+
+Supported numeric target kinds are `benchmark_point` (exactly one reference
+row), `keyed_benchmark_set` (multi-row keyed comparison), `scan_table`,
+single-valued `figure_curve`, ordered `parametric_curve`, and
+`exclusion_region`. Tables and keyed sets require full declared coverage;
+exclusion boundaries require an explicit authoritative source and disconnected
+or holed regions require declared `reference_faces`. Constraint-verdict
+transition geometry remains blocked until it can be assembled into unambiguous
+ordered paths. Full field-level semantics live in the
+[reproduction-target reference](./.claude/skills/hep-paper-formalize/references/repro-targets-contract.md).
+
+Quantitative reference import keeps three distinct evidence files: the raw
+source table, a canonical-unit table, and a hash-bound machine-verifiable
+normalization record. The comparator verifies that transformation and accepts
+already canonical data; it never guesses units or converts scan output.
+
+Two portability limits remain explicit. Exact-byte provenance does not attest
+the Python/Wolfram runtime, installed native libraries, OS, or CPU.
+Transactional durability is qualified only for supported POSIX hosts on a
+regular local same-filesystem workspace; Windows, NFS, SMB, object-backed
+mounts, and cross-device publication are not currently supported.
 
 ## Workspace project layout
 
 ```text
 workspace/projects/<project-name>/
-|-- manifest.json              # project state, history, and artifact index
+|-- manifest.json              # v2 project state and owner-indexed artifacts
 |-- idea/                      # research proposal artifacts
 |-- model/                     # model spec, calc tasks, benchmarks
 |-- constraints/               # experimental constraint data
 |-- calculations/task-001/     # symbolic and Python results per task
 |-- literature/                # optional paper reproduction inputs
-|-- reproduction/              # optional immutable comparison outputs
+|-- reproduction/
+|   |-- runs/<repro-id>/       # immutable result + provenance snapshot
+|   |-- figures/<repro-id>/
+|   `-- reports/<repro-id>.md
 `-- numerics/
     |-- scan-configs/<analysis-id>.json
-    |-- scan-results/<analysis-id>/
-    |-- figures/<analysis-id>/
+    |-- scan-results/<analysis-id>/  # scan.csv + scan.meta.json
+    |-- figures/<analysis-id>/       # outputs + figures.meta.json
     `-- analysis-summary-<analysis-id>.md
 ```
 
@@ -152,6 +236,9 @@ capture repository-level invariants that are not fully expressible as schemas,
 such as mirror invariants, source-of-truth order, and honest reproduction rules.
 When documentation disagrees, fix top-down from schemas and contracts rather
 than treating README prose as the source of truth.
+
+The summaries above are discovery aids. Follow the linked contracts and schemas
+for field-level behavior, migration, recovery, and platform qualification.
 
 ## Documentation
 

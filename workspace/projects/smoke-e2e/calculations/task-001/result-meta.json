@@ -31,5 +31,258 @@
   "depends_on": {
     "model_version": "v1",
     "model_checksum": "sha256:c1f3ba396d020c60408998c90681fec754b76a36ba763088dd3285e58334fdd1"
+  },
+  "input_provenance": {
+    "version": "sha256-bytes-v1",
+    "verification_status": "verified",
+    "entries": [
+      {
+        "scope": "project",
+        "role": "task-001-request",
+        "path": "calculations/task-001/request.md",
+        "sha256": "sha256:dead482061eaf823eb2c720e6688ea3666bdddf2de1de93d18485383933c7f02"
+      },
+      {
+        "scope": "project",
+        "role": "task-001-result-python",
+        "path": "calculations/task-001/result-python.py",
+        "sha256": "sha256:f802d9d4c4e7a8afc0bf58426dd81ebed785eb844ea37dcf4b19ead3592d69f2"
+      },
+      {
+        "scope": "project",
+        "role": "task-001-result-summary",
+        "path": "calculations/task-001/result-summary.md",
+        "sha256": "sha256:0f4a85497afd6850fc3af1dd063a2ce74fd51a8f2e04ea77f66c1c8f991a9d40"
+      },
+      {
+        "scope": "project",
+        "role": "task-001-result-wl",
+        "path": "calculations/task-001/result.wl",
+        "sha256": "sha256:2705d0fd8b8fc17c4ff04c36a765f5cdc50c7d479e4d238e55c683fca948f38a"
+      },
+      {
+        "scope": "project",
+        "role": "benchmarks",
+        "path": "model/benchmarks.json",
+        "sha256": "sha256:d70250bb815c5db35a1c26a7ca3a1f0558b0e6329729e08f30bed232f088eb7b"
+      },
+      {
+        "scope": "project",
+        "role": "calc-tasks",
+        "path": "model/calc-tasks.json",
+        "sha256": "sha256:914bfda2ded07f6e4ed325bb5b2b1147df2812ad7f9645086a2f7ae3cde3f03c"
+      },
+      {
+        "scope": "project",
+        "role": "model-spec",
+        "path": "model/model-spec.json",
+        "sha256": "sha256:c1f3ba396d020c60408998c90681fec754b76a36ba763088dd3285e58334fdd1"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-agents-SKILL.md",
+        "path": ".agents/skills/package-scribe/SKILL.md",
+        "sha256": "sha256:6931fd171183bcae7fc362ae8c96080ba052fd0b44b46916ae88512e7e5018da"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-agents-examples-electroweak-minimal-examples.md",
+        "path": ".agents/skills/package-scribe/examples/electroweak-minimal-examples.md",
+        "sha256": "sha256:414f31deec912a39c87622ad7950d25398f6ccbd8d9f8bb277cf096dd23ed90f"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-agents-examples-tutorial-examples.md",
+        "path": ".agents/skills/package-scribe/examples/tutorial-examples.md",
+        "sha256": "sha256:07ee89e4d06d41f95748513c98a2c4f167facfcf4aa50545e819228907bb6892"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-agents-references-custom-lagrangian-validation.md",
+        "path": ".agents/skills/package-scribe/references/custom-lagrangian-validation.md",
+        "sha256": "sha256:f72d45cceb69cd4ddfb0216578ddc28bbcb89a5b96832eb74733086d54aa4aa4"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-agents-references-packagex-reference.md",
+        "path": ".agents/skills/package-scribe/references/packagex-reference.md",
+        "sha256": "sha256:6f23365e9724d5039384702e285bc2c5bf89ab5364597a140eae6aff73b809e8"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-agents-references-standard-theories.md",
+        "path": ".agents/skills/package-scribe/references/standard-theories.md",
+        "sha256": "sha256:9ec93ddc17e258cf86059d68143bced09302d8bd914bbe47c213475b31ae1699"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-agents-scripts-_publication_transaction.py",
+        "path": ".agents/skills/package-scribe/scripts/_publication_transaction.py",
+        "sha256": "sha256:45b4cfeba7f1797fd1010a71bbee9ed70b5004f3e8ece276ecd3a0ada3bd5755"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-agents-scripts-check_package_result_placeholders.py",
+        "path": ".agents/skills/package-scribe/scripts/check_package_result_placeholders.py",
+        "sha256": "sha256:5e5686c902e26b6931f503e48c1ea41b8a402e6edbfc58955dba00e12fe376a2"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-agents-scripts-finalize_package_result.py",
+        "path": ".agents/skills/package-scribe/scripts/finalize_package_result.py",
+        "sha256": "sha256:23fa331795ac9ef2ebc829f95799604f2e472b4a10e8f8e8f9352e1f34f14101"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-agents-scripts-init_package_result_files.py",
+        "path": ".agents/skills/package-scribe/scripts/init_package_result_files.py",
+        "sha256": "sha256:5f9d67327f0104aa292a116b5b9bdc499c37a0051c60f378f262a5b50b378c57"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-agents-templates-request.md.tmpl",
+        "path": ".agents/skills/package-scribe/templates/request.md.tmpl",
+        "sha256": "sha256:77426bab1a1e50c30cd0e78668067780929fe17f2956ef700e9b61c3f6738c7a"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-agents-templates-result-meta.json.tmpl",
+        "path": ".agents/skills/package-scribe/templates/result-meta.json.tmpl",
+        "sha256": "sha256:7d82ffe26723e155dd75fed632188e18d8bc39158fa3be733855c592251a8284"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-agents-templates-result-python.py.tmpl",
+        "path": ".agents/skills/package-scribe/templates/result-python.py.tmpl",
+        "sha256": "sha256:797d7287c589a6d21b9f1cc43033e14cf420e5df5174a25cf1b6a3514361b930"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-agents-templates-result-summary.md.tmpl",
+        "path": ".agents/skills/package-scribe/templates/result-summary.md.tmpl",
+        "sha256": "sha256:af42f001b4d5a897cf0b840e663fe8340a69e7b53140743390934befd7ff72b5"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-agents-templates-run-instructions.md.tmpl",
+        "path": ".agents/skills/package-scribe/templates/run-instructions.md.tmpl",
+        "sha256": "sha256:8bbecbb5f252f8de37044b034dfc8972639222898fb3632e1f32ce5b7ee7b102"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-claude-SKILL.md",
+        "path": ".claude/skills/package-scribe/SKILL.md",
+        "sha256": "sha256:6931fd171183bcae7fc362ae8c96080ba052fd0b44b46916ae88512e7e5018da"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-claude-examples-electroweak-minimal-examples.md",
+        "path": ".claude/skills/package-scribe/examples/electroweak-minimal-examples.md",
+        "sha256": "sha256:414f31deec912a39c87622ad7950d25398f6ccbd8d9f8bb277cf096dd23ed90f"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-claude-examples-tutorial-examples.md",
+        "path": ".claude/skills/package-scribe/examples/tutorial-examples.md",
+        "sha256": "sha256:07ee89e4d06d41f95748513c98a2c4f167facfcf4aa50545e819228907bb6892"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-claude-references-custom-lagrangian-validation.md",
+        "path": ".claude/skills/package-scribe/references/custom-lagrangian-validation.md",
+        "sha256": "sha256:f72d45cceb69cd4ddfb0216578ddc28bbcb89a5b96832eb74733086d54aa4aa4"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-claude-references-packagex-reference.md",
+        "path": ".claude/skills/package-scribe/references/packagex-reference.md",
+        "sha256": "sha256:6f23365e9724d5039384702e285bc2c5bf89ab5364597a140eae6aff73b809e8"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-claude-references-standard-theories.md",
+        "path": ".claude/skills/package-scribe/references/standard-theories.md",
+        "sha256": "sha256:9ec93ddc17e258cf86059d68143bced09302d8bd914bbe47c213475b31ae1699"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-claude-scripts-_publication_transaction.py",
+        "path": ".claude/skills/package-scribe/scripts/_publication_transaction.py",
+        "sha256": "sha256:45b4cfeba7f1797fd1010a71bbee9ed70b5004f3e8ece276ecd3a0ada3bd5755"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-claude-scripts-check_package_result_placeholders.py",
+        "path": ".claude/skills/package-scribe/scripts/check_package_result_placeholders.py",
+        "sha256": "sha256:5e5686c902e26b6931f503e48c1ea41b8a402e6edbfc58955dba00e12fe376a2"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-claude-scripts-finalize_package_result.py",
+        "path": ".claude/skills/package-scribe/scripts/finalize_package_result.py",
+        "sha256": "sha256:23fa331795ac9ef2ebc829f95799604f2e472b4a10e8f8e8f9352e1f34f14101"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-claude-scripts-init_package_result_files.py",
+        "path": ".claude/skills/package-scribe/scripts/init_package_result_files.py",
+        "sha256": "sha256:5f9d67327f0104aa292a116b5b9bdc499c37a0051c60f378f262a5b50b378c57"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-claude-templates-request.md.tmpl",
+        "path": ".claude/skills/package-scribe/templates/request.md.tmpl",
+        "sha256": "sha256:77426bab1a1e50c30cd0e78668067780929fe17f2956ef700e9b61c3f6738c7a"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-claude-templates-result-meta.json.tmpl",
+        "path": ".claude/skills/package-scribe/templates/result-meta.json.tmpl",
+        "sha256": "sha256:7d82ffe26723e155dd75fed632188e18d8bc39158fa3be733855c592251a8284"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-claude-templates-result-python.py.tmpl",
+        "path": ".claude/skills/package-scribe/templates/result-python.py.tmpl",
+        "sha256": "sha256:797d7287c589a6d21b9f1cc43033e14cf420e5df5174a25cf1b6a3514361b930"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-claude-templates-result-summary.md.tmpl",
+        "path": ".claude/skills/package-scribe/templates/result-summary.md.tmpl",
+        "sha256": "sha256:af42f001b4d5a897cf0b840e663fe8340a69e7b53140743390934befd7ff72b5"
+      },
+      {
+        "scope": "repository",
+        "role": "package-scribe-claude-templates-run-instructions.md.tmpl",
+        "path": ".claude/skills/package-scribe/templates/run-instructions.md.tmpl",
+        "sha256": "sha256:8bbecbb5f252f8de37044b034dfc8972639222898fb3632e1f32ce5b7ee7b102"
+      },
+      {
+        "scope": "repository",
+        "role": "result-meta-schema",
+        "path": "schemas/result-meta.schema.json",
+        "sha256": "sha256:736026e1478c1ff5392b9296836495d85dc48bf2dde9f10ca73ac403bf9ec4f0"
+      },
+      {
+        "scope": "repository",
+        "role": "calculation-provenance-validator",
+        "path": "scripts/_calculation_provenance.py",
+        "sha256": "sha256:37cbad9a832e0762fa9cdd747e00a5eecb5ee5db32f57a82bf82ba62366691ae"
+      },
+      {
+        "scope": "repository",
+        "role": "dependency-graph-helper",
+        "path": "scripts/_dependency_graph.py",
+        "sha256": "sha256:fcd72666fb9800fbb8fa9ab32cdde62e0f57c48bd0d622f8215ee336da836cdc"
+      },
+      {
+        "scope": "repository",
+        "role": "workflow-dependency-helper",
+        "path": "scripts/_workflow_dependencies.py",
+        "sha256": "sha256:1d31057c5f30aaf799268edff61f875e2b4fecd29ad2e263385062377cdbe2a2"
+      }
+    ],
+    "root_sha256": "sha256:37d13047b7ddb4232bdb8afdb089ef407e1993cdfc7ff8fe752b922353016e35"
   }
 }

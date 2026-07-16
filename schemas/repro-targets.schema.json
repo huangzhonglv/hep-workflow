@@ -10,7 +10,7 @@
   "properties": {
     "paper_id": {
       "type": "string",
-      "minLength": 1
+      "pattern": "\\S"
     },
     "targets": {
       "type": "array",
@@ -23,7 +23,16 @@
   "$defs": {
     "canonical_name": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9_]+$"
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+      "not": {
+        "enum": [
+          "False", "None", "True", "and", "as", "assert", "async", "await",
+          "break", "class", "continue", "def", "del", "elif", "else", "except",
+          "finally", "for", "from", "global", "if", "import", "in", "is",
+          "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try",
+          "while", "with", "yield"
+        ]
+      }
     },
     "target_id": {
       "type": "string",
@@ -42,13 +51,15 @@
           "enum": [
             "relative",
             "absolute",
+            "normalized_distance",
             "qualitative"
           ]
         },
         "value": {
           "anyOf": [
             {
-              "type": "number"
+              "type": "number",
+              "minimum": 0
             },
             {
               "type": "string"
@@ -70,9 +81,6 @@
         },
         {
           "type": "boolean"
-        },
-        {
-          "type": "null"
         }
       ]
     },
@@ -84,6 +92,507 @@
       "additionalProperties": {
         "$ref": "#/$defs/fixed_value"
       }
+    },
+    "fixed_normalization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_value",
+        "source_unit",
+        "canonical_value",
+        "canonical_unit",
+        "operation",
+        "factor",
+        "offset"
+      ],
+      "properties": {
+        "source_value": {
+          "$ref": "#/$defs/fixed_value"
+        },
+        "source_unit": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "canonical_value": {
+          "$ref": "#/$defs/fixed_value"
+        },
+        "canonical_unit": {
+          "type": "string",
+          "pattern": "\\S"
+        },
+        "operation": {
+          "const": "linear"
+        },
+        "factor": {
+          "type": "number",
+          "not": {
+            "const": 0
+          }
+        },
+        "offset": {
+          "type": "number"
+        }
+      }
+    },
+    "normalization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "method",
+        "source_units",
+        "canonical_units",
+        "conversions",
+        "fixed_parameters",
+        "acquisition",
+        "source_data_file",
+        "record_file"
+      ],
+      "properties": {
+        "status": {
+          "const": "canonical"
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "identity",
+            "converted"
+          ]
+        },
+        "canonical_units": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "$ref": "#/$defs/canonical_name"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "\\S"
+          }
+        },
+        "source_units": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "$ref": "#/$defs/canonical_name"
+          },
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "\\S"
+          }
+        },
+        "conversions": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "$ref": "#/$defs/canonical_name"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "operation",
+              "factor",
+              "offset"
+            ],
+            "properties": {
+              "operation": {
+                "const": "linear"
+              },
+              "factor": {
+                "type": "number",
+                "not": {
+                  "const": 0
+                }
+              },
+              "offset": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "fixed_parameters": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/canonical_name"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/fixed_normalization"
+          }
+        },
+        "acquisition": {
+          "type": "object",
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "source_type": {
+                    "const": "synthetic_fixture"
+                  }
+                },
+                "required": [
+                  "source_type"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "method": {
+                    "const": "synthetic_fixture"
+                  }
+                }
+              },
+              "else": {
+                "properties": {
+                  "method": {
+                    "not": {
+                      "const": "synthetic_fixture"
+                    }
+                  }
+                }
+              }
+            }
+          ],
+          "required": [
+            "source_type",
+            "paper_id",
+            "source_locator",
+            "method",
+            "acquired_at"
+          ],
+          "properties": {
+            "source_type": {
+              "type": "string",
+              "enum": [
+                "paper_figure",
+                "paper_table",
+                "supplemental_data",
+                "author_data",
+                "trusted_repository",
+                "synthetic_fixture"
+              ]
+            },
+            "source_locator": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "paper_id": {
+              "type": "string",
+              "pattern": "\\S"
+            },
+            "method": {
+              "type": "string",
+              "enum": [
+                "manual_digitization",
+                "direct_copy",
+                "programmatic_import",
+                "synthetic_fixture"
+              ]
+            },
+            "acquired_at": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+            },
+            "notes": {
+              "type": "string"
+            }
+          }
+        },
+        "source_data_file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "record_file": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "comparison_domain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x_min",
+        "x_max"
+      ],
+      "properties": {
+        "x_min": {
+          "type": "number"
+        },
+        "x_max": {
+          "type": "number"
+        }
+      }
+    },
+    "parameter_domain": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "parameter_min",
+        "parameter_max"
+      ],
+      "properties": {
+        "parameter_min": {
+          "type": "number"
+        },
+        "parameter_max": {
+          "type": "number"
+        }
+      }
+    },
+    "reference_excluded_probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        }
+      }
+    },
+    "reference_face": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "parent_id",
+        "closed",
+        "excluded_side",
+        "excluded_probe"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/canonical_name"
+        },
+        "parent_id": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/canonical_name"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "closed": {
+          "const": true
+        },
+        "excluded_side": {
+          "type": "string",
+          "enum": [
+            "interior",
+            "exterior"
+          ]
+        },
+        "excluded_probe": {
+          "$ref": "#/$defs/reference_excluded_probe"
+        }
+      }
+    },
+    "reference_faces": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/reference_face"
+      }
+    },
+    "boundary": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "observable",
+            "operator",
+            "value",
+            "value_unit",
+            "component_column",
+            "reference_order_column",
+            "reference_closed_column"
+          ],
+          "oneOf": [
+            {
+              "required": ["reference_excluded_probe"],
+              "not": {"required": ["reference_faces"]}
+            },
+            {
+              "required": ["reference_faces"],
+              "not": {"required": ["reference_excluded_probe"]}
+            }
+          ],
+          "properties": {
+            "mode": {
+              "const": "observable_threshold"
+            },
+            "observable": {
+              "$ref": "#/$defs/canonical_name"
+            },
+            "operator": {
+              "type": "string",
+              "enum": [
+                "greater_than_or_equal",
+                "less_than_or_equal"
+              ]
+            },
+            "value": {
+              "type": "number"
+            },
+            "value_unit": {
+              "type": "string",
+              "minLength": 1
+            },
+            "component_column": {
+              "$ref": "#/$defs/canonical_name"
+            },
+            "reference_order_column": {
+              "$ref": "#/$defs/canonical_name"
+            },
+            "reference_closed_column": {
+              "$ref": "#/$defs/canonical_name"
+            },
+            "reference_excluded_probe": {
+              "$ref": "#/$defs/reference_excluded_probe"
+            },
+            "reference_faces": {
+              "$ref": "#/$defs/reference_faces"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "constraint_id",
+            "connectivity",
+            "component_column",
+            "reference_order_column",
+            "reference_closed_column"
+          ],
+          "oneOf": [
+            {
+              "required": ["reference_excluded_probe"],
+              "not": {"required": ["reference_faces"]}
+            },
+            {
+              "required": ["reference_faces"],
+              "not": {"required": ["reference_excluded_probe"]}
+            }
+          ],
+          "properties": {
+            "mode": {
+              "const": "constraint_verdict_transition"
+            },
+            "constraint_id": {
+              "type": "string",
+              "pattern": "^c-[0-9]{3}$"
+            },
+            "connectivity": {
+              "type": "string",
+              "enum": [
+                "four",
+                "eight"
+              ]
+            },
+            "component_column": {
+              "$ref": "#/$defs/canonical_name"
+            },
+            "reference_order_column": {
+              "$ref": "#/$defs/canonical_name"
+            },
+            "reference_closed_column": {
+              "$ref": "#/$defs/canonical_name"
+            },
+            "reference_excluded_probe": {
+              "$ref": "#/$defs/reference_excluded_probe"
+            },
+            "reference_faces": {
+              "$ref": "#/$defs/reference_faces"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "membership_column",
+            "membership_value",
+            "component_column",
+            "order_column",
+            "closed_column",
+            "reference_order_column",
+            "reference_closed_column",
+            "region_column",
+            "excluded_value"
+          ],
+          "oneOf": [
+            {
+              "required": ["reference_excluded_probe"],
+              "not": {"required": ["reference_faces"]}
+            },
+            {
+              "required": ["reference_faces"],
+              "not": {"required": ["reference_excluded_probe"]}
+            }
+          ],
+          "properties": {
+            "mode": {
+              "const": "precomputed_boundary"
+            },
+            "membership_column": {
+              "$ref": "#/$defs/canonical_name"
+            },
+            "membership_value": {
+              "anyOf": [
+                {"type": "string"},
+                {"type": "number"},
+                {"type": "boolean"}
+              ]
+            },
+            "component_column": {
+              "$ref": "#/$defs/canonical_name"
+            },
+            "order_column": {
+              "$ref": "#/$defs/canonical_name"
+            },
+            "closed_column": {
+              "$ref": "#/$defs/canonical_name"
+            },
+            "reference_order_column": {
+              "$ref": "#/$defs/canonical_name"
+            },
+            "reference_closed_column": {
+              "$ref": "#/$defs/canonical_name"
+            },
+            "region_column": {
+              "$ref": "#/$defs/canonical_name"
+            },
+            "excluded_value": {
+              "anyOf": [
+                {"type": "string"},
+                {"type": "number"},
+                {"type": "boolean"}
+              ]
+            },
+            "reference_excluded_probe": {
+              "$ref": "#/$defs/reference_excluded_probe"
+            },
+            "reference_faces": {
+              "$ref": "#/$defs/reference_faces"
+            }
+          }
+        }
+      ]
     },
     "target": {
       "type": "object",
@@ -99,6 +608,329 @@
         "data_file",
         "tolerance"
       ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "benchmark_point",
+                  "scan_table"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "required": [
+              "match_columns"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "keyed_benchmark_set"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "required": [
+              "match_columns"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "formula"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {"required": ["scan_parameters"]},
+                {"required": ["match_columns"]},
+                {"required": ["normalization"]},
+                {"required": ["comparison_domain"]},
+                {"required": ["parameter_domain"]},
+                {"required": ["curve_representation"]},
+                {"required": ["curve_parameter"]},
+                {"required": ["curve_closed"]},
+                {"required": ["boundary"]},
+                {"required": ["coordinate_scales"]}
+              ]
+            },
+            "properties": {
+              "tolerance": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "value"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "qualitative"
+                  },
+                  "value": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "properties": {
+                "kind": {
+                  "const": "formula"
+                }
+              },
+              "required": [
+                "kind"
+              ]
+            }
+          },
+          "then": {
+            "required": [
+              "scan_parameters",
+              "normalization"
+            ],
+            "properties": {
+              "tolerance": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "value"
+                ],
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "relative",
+                      "absolute",
+                      "normalized_distance"
+                    ]
+                  },
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "benchmark_point",
+                  "keyed_benchmark_set",
+                  "scan_table"
+                ]
+              }
+            },
+            "required": ["kind"]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                {"required": ["comparison_domain"]},
+                {"required": ["parameter_domain"]},
+                {"required": ["curve_representation"]},
+                {"required": ["curve_parameter"]},
+                {"required": ["curve_closed"]},
+                {"required": ["boundary"]},
+                {"required": ["coordinate_scales"]},
+                {"required": ["expected_qualitative"]}
+              ]
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "figure_curve"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "required": [
+              "comparison_domain",
+              "curve_representation"
+            ],
+            "not": {
+              "anyOf": [
+                {"required": ["match_columns"]},
+                {"required": ["boundary"]},
+                {"required": ["coordinate_scales"]},
+                {"required": ["parameter_domain"]},
+                {"required": ["curve_parameter"]},
+                {"required": ["curve_closed"]},
+                {"required": ["expected_qualitative"]}
+              ]
+            },
+            "properties": {
+              "curve_representation": {
+                "const": "single_valued_y_of_x"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "parametric_curve"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "required": [
+              "parameter_domain",
+              "curve_representation",
+              "curve_parameter",
+              "curve_closed",
+              "coordinate_scales"
+            ],
+            "not": {
+              "anyOf": [
+                {"required": ["match_columns"]},
+                {"required": ["comparison_domain"]},
+                {"required": ["boundary"]},
+                {"required": ["expected_qualitative"]}
+              ]
+            },
+            "properties": {
+              "curve_representation": {
+                "const": "ordered_parametric_xy"
+              },
+              "tolerance": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "value"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "normalized_distance"
+                  },
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "enum": [
+                  "benchmark_point",
+                  "keyed_benchmark_set",
+                  "scan_table",
+                  "figure_curve"
+                ]
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "properties": {
+              "tolerance": {
+                "properties": {
+                  "kind": {
+                    "enum": [
+                      "relative",
+                      "absolute"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "exclusion_region"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "then": {
+            "required": [
+              "boundary",
+              "coordinate_scales"
+            ],
+            "not": {
+              "anyOf": [
+                {"required": ["match_columns"]},
+                {"required": ["comparison_domain"]},
+                {"required": ["curve_representation"]},
+                {"required": ["parameter_domain"]},
+                {"required": ["curve_parameter"]},
+                {"required": ["curve_closed"]}
+              ]
+            },
+            "properties": {
+              "tolerance": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "kind",
+                  "value"
+                ],
+                "properties": {
+                  "kind": {
+                    "const": "normalized_distance"
+                  },
+                  "value": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
       "properties": {
         "id": {
           "$ref": "#/$defs/target_id"
@@ -108,8 +940,10 @@
           "enum": [
             "formula",
             "benchmark_point",
+            "keyed_benchmark_set",
             "scan_table",
             "figure_curve",
+            "parametric_curve",
             "exclusion_region"
           ]
         },
@@ -119,9 +953,26 @@
         "y_param": {
           "$ref": "#/$defs/canonical_name"
         },
+        "match_columns": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/canonical_name"
+          }
+        },
+        "scan_parameters": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/canonical_name"
+          }
+        },
         "observables": {
           "type": "array",
           "minItems": 1,
+          "uniqueItems": true,
           "items": {
             "$ref": "#/$defs/canonical_name"
           }
@@ -141,6 +992,42 @@
         },
         "tolerance": {
           "$ref": "#/$defs/tolerance"
+        },
+        "normalization": {
+          "$ref": "#/$defs/normalization"
+        },
+        "comparison_domain": {
+          "$ref": "#/$defs/comparison_domain"
+        },
+        "parameter_domain": {
+          "$ref": "#/$defs/parameter_domain"
+        },
+        "curve_representation": {
+          "type": "string",
+          "enum": [
+            "single_valued_y_of_x",
+            "ordered_parametric_xy"
+          ]
+        },
+        "curve_parameter": {
+          "$ref": "#/$defs/canonical_name"
+        },
+        "curve_closed": {
+          "type": "boolean"
+        },
+        "boundary": {
+          "$ref": "#/$defs/boundary"
+        },
+        "coordinate_scales": {
+          "type": "object",
+          "minProperties": 2,
+          "propertyNames": {
+            "$ref": "#/$defs/canonical_name"
+          },
+          "additionalProperties": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          }
         },
         "expected_qualitative": {
           "type": "string"

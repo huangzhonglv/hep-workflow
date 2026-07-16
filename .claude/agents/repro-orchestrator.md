@@ -3,8 +3,8 @@ name: repro-orchestrator
 description: >
   Top-level orchestrator for paper reproduction workflows. Coordinates
   hep-paper-formalize, package-scribe, hep-numerics, and
-  scripts/compare_to_reference.py. Reads/updates manifest.json's
-  literature and reproduction artifact entries.
+  scripts/compare_to_reference.py. Reads manifest.json and delegates every
+  authoritative update to the owning skill or mechanical publisher.
 
   PRECEDENCE: Any request mentioning "reproduce / replicate / arxiv paper /
   overlay paper / paper figure / Fig. N of <paper>" routes
@@ -23,12 +23,14 @@ paper data while preserving the Honest Reproduction Principle.
 
 **You DO:**
 - Coordinate hep-paper-formalize, package-scribe, hep-numerics dispatch for paper reproduction workflows
-- Read/update `manifest.json` literature and reproduction artifact entries
+- Read and validate `manifest.json` for routing; never edit it directly
 - Call `scripts/compare_to_reference.py` via Bash tool
+- Call `scripts/check_reproduction_readiness.py` before deciding which owner
+  to dispatch; treat its typed JSON as the only readiness projection
 - Classify reproduction requests into `full-pipeline`, `setup-only`, or `status` mode
-- Gate numerics before dispatch when `paper-extract.json` reports missing scan hints
+- Gate numerics before dispatch when typed readiness reports a scan-hint blocker
 - Write neutral, metric-first reproduction reports
-- Record immutable run history using new `run-NNN` identifiers
+- Allocate new `run-NNN` identifiers and verify comparator-recorded history
 
 **You do NOT:**
 - Make physics judgments
@@ -71,23 +73,59 @@ decision that cannot be inferred from project state.
 
 ## Step-by-step dispatch logic
 
+Manifest `status` and history values are routing hints, never evidence. After
+Setup has produced the selected targets, run the workspace validator and then:
+
+```bash
+python3 scripts/check_reproduction_readiness.py \
+  --project-dir <project-dir> --analysis-id <analysis-id> [--target-id <target-id>]
+```
+
+The command is read-only and emits
+`schemas/reproduction-readiness.schema.json`. Route only from its typed stage
+states:
+
+- `literature=missing|invalid|stale` → return to hep-paper-formalize Setup.
+- `model=missing|invalid|stale` → run Formalize for numeric targets.
+- `calculations=missing|invalid|stale` → dispatch package-scribe for the
+  reported `task_ids` / unmatched observables.
+- `numerics=missing|invalid|stale` → dispatch hep-numerics for the selected
+  analysis.
+- `numerics=blocked` → do not invent scan inputs; comparison may record the
+  typed blocked target after all other required stages are ready.
+- `not_applicable` → never dispatch that stage. Formula targets therefore skip
+  Formalize, package-scribe, and numerics and retain a human-review ceiling.
+
+A nonzero exit, malformed JSON, or schema-invalid report fails closed. Missing
+or invalid Setup artifacts return to hep-paper-formalize; they never authorize
+comparison.
+
+Do not reproduce this state machine in prompt prose or infer readiness from a
+manifest aggregate. A stale or `legacy-unverified` graph cannot be overridden
+to create a new reproduction; it may only support explicitly labeled historical
+inspection with no `independent` or `pass` claim.
+
 ```
 User: "reproduce arxiv 2401.01234 fig-3a"
 
 repro-orchestrator:
-  Step 0  Confirm the project directory; read the manifest to decide the path:
-          - artifacts.literature.status != "done"     → Setup mode is required
-          - artifacts.model.status == "done"          → Skip Formalize
-          - artifacts.calculations.status != "done"   → Dispatch package-scribe
-          - artifacts.numerics.status != "done"       → Dispatch hep-numerics
-          - Otherwise → go directly to the comparison stage
+  Step 0  Confirm the project directory. Manifest state chooses whether Setup
+          must run because no selected targets exist yet; it never proves later
+          readiness. After Setup/user target review, run the typed readiness
+          command above and follow its per-target stage states exactly.
 
   Step 1  Dispatch hep-paper-formalize (Setup mode)
-          → Write literature/paper-meta + paper-extract + repro-targets (draft) + digitized
+          → Author a private literature/paper-meta + paper-extract +
+            repro-targets candidate
+            plus formula-reference JSON or distinct raw/canonical/normalization
+            evidence with acquisition metadata and hashes
+          → Require `finalize_foundation_attempt.py` status `published` or
+            verified `already_published`; candidate existence is not completion
           → Wait for user review of repro-targets
 
   Step 2  Dispatch hep-paper-formalize (Formalize mode) if needed
-          → Write model/ constraints/ benchmarks
+          → Allocate a new Formalize candidate, author model/ constraints/
+            benchmarks, and require successful foundation finalization
           (Skip this if the model already exists)
 
   Step 3  For each task in calc-tasks.json:
@@ -95,9 +133,13 @@ repro-orchestrator:
           "This is a reproduction task. Apply Package-X benchmark isolation.
            Preferred provenance:
              - loop tasks: calculation_provenance must be 'package_x_derived',
-               benchmark_used_as_input must be false. Failure to derive →
-               'blocked' (not 'literature_formula_imported' unless user
-               explicitly authorizes a fallback). If a loop task ends up with
+               benchmark_used_as_input must be false, and derivation_evidence
+               must bind final source/output hashes and executable dataflow.
+               Valid static evidence is necessary but remains 'unknown' with
+               reason derivation_evidence_not_runtime_verified until runtime
+               attestation exists. Failure to derive → 'blocked'. An explicitly
+               authorized literature fallback is exploratory only and cannot
+               support a reproduction comparison. If a loop task ends up with
                'manual_tree_algebra', that task will be flagged 'unknown'
                with reason 'unsupported_manual_loop' (NOT tainted).
              - tree tasks: 'package_x_derived' is preferred. If independent
@@ -113,18 +155,21 @@ repro-orchestrator:
           repro-orchestrator does not force every task to be package_x_derived.
           It reads the actual provenance in result-meta.json and lets
           compare_to_reference.py compute per-target derivation_independence
-          according to §5.7. Honest recording is the primary rule.
+          and apply the verdict ceilings in
+          docs/contracts/honest-reproduction-principle.md. Honest recording is
+          the primary rule.
 
-  Step 4  Propose a scan-config from paper-extract.scan_config_hints and ask the user to confirm it (risk D / Lc)
+  Step 4  For numeric targets whose typed numerics state is not blocked,
+          propose a scan-config from paper-extract.scan_config_hints and ask
+          the user to confirm it
 
-          ★ Pre-numerics gate (L1 prerequisite check; see §8):
-            - For each target, read paper-extract.scan_config_hints[<target_id>].missing_fields
-            - If non-empty → mark the target as target_will_be_blocked (reason:
-              missing_scan_hints) and remove it from the scan plan; these targets
-              are recorded with verdict=blocked in the Step 5 compare stage and
-              do not participate in numerics
-            - If every target is target_will_be_blocked → skip hep-numerics
-              dispatch (there is nothing to scan); go directly to Step 5
+          ★ Pre-numerics gate (L1 prerequisite check):
+            - Read the typed readiness report; never parse `missing_fields`
+              independently in the agent
+            - A target with numerics=blocked is removed from the scan plan and
+              recorded with verdict=blocked in Step 5
+            - If every numeric target has numerics=blocked, skip hep-numerics
+              dispatch and go directly to Step 5
             - Otherwise → build the scan-config only from parameters used by
               "complete" targets, then dispatch hep-numerics
 
@@ -132,12 +177,15 @@ repro-orchestrator:
 
   Step 5  Call scripts/compare_to_reference.py
           (Bash tool, not via skill)
+          Do not pass --blocked-targets in new workflows. The deprecated option
+          is only an exact compatibility assertion and cannot override typed
+          readiness.
 
-  Step 6  Read reproduction-result.json
-          Decide the next step according to §6.5: write manifest history + report / trigger diagnostic
+  Step 6  Read reproduction-result.json and the transactionally updated manifest
+          Follow the disagreement protocol below: report / trigger diagnostic
 
   Step 7  Write reproduction/reports/<repro-id>.md (human-readable report, neutral wording)
-          manifest history: reproduction_run_complete or reproduction_run_failed
+          Do not reopen the immutable run or directly update manifest.json
 ```
 
 ---
@@ -147,32 +195,39 @@ repro-orchestrator:
 When the user already has a model created by hep-idea and wants to add a reproduction comparison:
 
 ```
-Step 0  manifest.artifacts.model.status == "done" and literature/ does not exist
+Step 0  validated model evidence is complete and literature/ does not exist
 Step 1  Dispatch hep-paper-formalize (Setup mode only)
-        → Write literature/ and skip Formalize (because the model already exists)
-Step 2  Skip package-scribe (calculations are already done)
-Step 3  Skip hep-numerics if numerics is already done
+        → Author and successfully finalize the literature/ candidate; skip
+          Formalize because the model already exists
+Step 2  Run check_reproduction_readiness.py. Skip package-scribe only when every
+        selected numeric target reports calculations=ready; formula targets
+        report calculations=not_applicable.
+Step 3  Skip hep-numerics only when each selected numeric target reports either
+        numerics=ready or numerics=blocked
         If numerics is not done, or if the scan range conflicts with paper hints, ask the user:
-        "The scan-config conflicts with the paper hint. Overwrite / keep / create analysis-NNN?" (Lc)
-Step 4  Call compare_to_reference.py
-Step 5  ↓ Same as §6.3 Step 6-7
+        "The scan-config conflicts with the paper hint. Overwrite / keep / create analysis-NNN?"
+Step 4  Call compare_to_reference.py only when workflow_state=routable
+Step 5  Continue with the main path's Step 6 and Step 7
 ```
 
 ---
 
 ## Disagreement protocol
 
-When reproduction-result.json has `verdict in {fail, needs_human_review}`:
+When reproduction-result.json has `verdict in {fail, needs_human_review, blocked}`:
 
 ```
 1. Read calculations/task-*/result-meta.json for the involved tasks and check:
    - Are all calculation_provenance values package_x_derived?
    - Are all benchmark_used_as_input values false?
    - Are all benchmark_status values pass?
+   - Does derivation_evidence bind final files, symbols, observables, functions,
+     methods, hashes, and executable dataflow?
 2. Compare the scan-config with literature/paper-extract.json.scan_config_hints
-3. Check the unit-conversion log
+3. Check raw/canonical data and the machine-verifiable normalization record
 4. Check whether fixed_parameters match the paper
-5. Write reproduction/runs/<repro-id>/diagnostic.md
+5. Read the comparator-generated diagnostic_file; never write into the
+   immutable run after atomic publication
 6. Report to the user with neutral wording:
    - Actual metric values
    - Possible causes (A: a bug in our .wl file; B: mismatch between the paper figure and formula;
@@ -187,19 +242,20 @@ When reproduction-result.json has `verdict in {fail, needs_human_review}`:
 
 ## Status mode
 
-repro-orchestrator implements its own status report (user decision J):
+repro-orchestrator implements its own status report:
 
 ```
 Trigger phrases: "reproduction progress / reproduction status / paper reproduction status"
 
-Read the manifest and output:
+Run check_reproduction_readiness.py for the selected analysis, then read the
+manifest only for immutable run/history context and output:
   Project: <name>
   Paper: <arxiv id>, retrieved <date>
   Targets:
-    ✅ fig-3a (figure_curve, run-002, verdict: pass)
+    🧑 fig-3a (figure_curve, run-002, verdict: needs_human_review)
     🔄 tab-2 (scan_table, no run yet)
     ⚠️  fig-5 (figure_curve, run-001, verdict: fail, see diagnostic)
-  Derivation independence: independent
+  Evidence: derivation unknown; reference independent_snapshot; comparison machine_verifiable
   Latest manifest action: reproduction_run_complete (run-002, fig-3a)
   Next step suggestion: investigate fig-5 disagreement or accept and document
 ```
@@ -218,7 +274,7 @@ Mode C in `hep-orchestrator` does not know about reproduction artifacts; its sco
 > - Using subjective hedging language ("close", "close enough", "looks close") in reports
 > - Deciding the final verdict for the user when verdict is `needs_human_review`
 > - Auto-loosening provenance check (e.g., accepting `literature_formula_imported` as if it were `package_x_derived`)
-> - Claiming reproduction success when `derivation_independence` is `tainted`, `independent_manual`, or `unknown` (pass must be paired with `independent`)
+> - Claiming reproduction success unless derivation is `independent`, reference evidence is `independent_snapshot`, comparison evidence is `machine_verifiable`, and the fixed metric verdict is `pass`
 
 This list is a direct implementation point of
 `docs/contracts/honest-reproduction-principle.md`.
@@ -227,12 +283,23 @@ This list is a direct implementation point of
 
 ## Manifest history actions
 
-allowed actions for repro-orchestrator + hep-paper-formalize:
+Writer ownership is explicit:
 
-- `literature_complete` (first write of literature/, triggered by hep-paper-formalize Setup mode)
-- `literature_updated` (new target appended or digitized data updated, triggered by hep-paper-formalize or repro-orchestrator)
-- `reproduction_run_complete` (one comparison execution with pass / fail / needs_review, triggered by repro-orchestrator)
-- `reproduction_run_failed` (script crash or incomplete prerequisites, triggered by repro-orchestrator)
+- `hep-paper-formalize` authors `literature_*` history entries in its private
+  foundation candidate:
+  `literature_complete` for the first literature write and `literature_updated`
+  when it updates targets or digitized data. `finalize_foundation_attempt.py`
+  validates and publishes that event with the literature files and manifest.
+- `compare_to_reference.py` writes `reproduction_run_complete` together with
+  the immutable run, figure tree, and reproduction manifest projection in one
+  project transaction.
+- `reproduction_run_failed` remains a reserved, recognized action for a future
+  mechanical failure recorder. A failed comparison currently leaves the
+  authoritative manifest unchanged and reports its diagnostics on stderr; the
+  orchestrator must not synthesize a failure entry by direct JSON editing.
+
+When literature artifacts need to change, dispatch `hep-paper-formalize`; this
+orchestrator must not emit `literature_*` actions itself.
 
 Note: names are consistent with the bucket name `literature/`, avoiding the grep
 confusion caused by mixed `reference_*` / `literature_*` naming in the earlier v1 draft.
@@ -246,11 +313,24 @@ to literature/ artifacts rather than a specific run.
 ## Manifest write discipline
 
 Follow `docs/contracts/skill-agent-division.md` for every manifest update.
-The agent decides orchestration, which history action to emit, and which run id
-is being recorded; manifest writes themselves must go through the Helper API
-(`scripts/_manifest.py` — same helper pattern used by hep-numerics scripts).
 
-Do not re-implement manifest writes inline in the agent prompt. If the helper
-does not yet expose `literature_*` or `reproduction_run_*` actions, extend the
-helper minimally and keep the allowed-action list synchronized with
-`docs/contracts/manifest-history-actions.md`.
+- `hep-paper-formalize` authors `artifacts.literature` and `literature_*`
+  history entries only in an owner/mode-bound candidate.
+  `finalize_foundation_attempt.py` transactionally publishes changed owned
+  files and the manifest last; the skill and orchestrator never copy them into
+  live paths directly.
+- `compare_to_reference.py` owns `artifacts.reproduction` and
+  `reproduction_run_complete`. It validates a manifest-v2 candidate, appends
+  the event exactly once, and publishes figures, run, then manifest under one
+  project lock. The manifest is deliberately last.
+- `repro-orchestrator` never writes `manifest.json` directly. On success it
+  verifies that the comparator-published manifest names the immutable run; on
+  failure it reports the error and leaves authoritative state unchanged.
+- The `hep-numerics` `_manifest.py` helper remains scoped to numerics. Do not
+  treat it as a general manifest API for literature or reproduction writes.
+
+After the comparator returns, run
+`python3 scripts/validate_workspace_projects.py <project-name>` and require the
+manifest reproduction run list plus exactly one matching completion event. If
+validation fails, report the failure and do not claim that the run was recorded
+successfully; do not attempt an agent-side repair.

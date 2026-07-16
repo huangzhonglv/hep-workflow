@@ -26,13 +26,16 @@
       "name": "LHC Z' dimuon search (ATLAS)",
       "type": "upper_limit",
       "observable": "sigma_pp_to_Zp_to_mumu",
+      "unit": "fb",
       "confidence_level": 0.95,
       "source": "arXiv:...",
       "interpolation": {
         "file": "constraints/atlas-dimuon-limit.csv",
         "x_parameter": "M_Zp",
+        "x_column": "M_Zp",
         "x_unit": "GeV",
         "y_quantity": "sigma_pp_to_Zp_to_mumu",
+        "y_column": "sigma_pp_to_Zp_to_mumu",
         "y_unit": "fb",
         "method": "loglog_linear",
         "valid_range": [

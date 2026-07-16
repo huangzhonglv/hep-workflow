@@ -1,0 +1,38 @@
+{
+  "status": "canonical",
+  "method": "identity",
+  "source_data_file": "literature/digitized/target-001.raw.csv",
+  "canonical_data_file": "literature/digitized/target-001.csv",
+  "source_units": {
+    "M_Hpp": "GeV",
+    "BR_toy": "dimensionless"
+  },
+  "canonical_units": {
+    "M_Hpp": "GeV",
+    "BR_toy": "dimensionless"
+  },
+  "conversions": {
+    "M_Hpp": {"operation": "linear", "factor": 1.0, "offset": 0.0},
+    "BR_toy": {"operation": "linear", "factor": 1.0, "offset": 0.0}
+  },
+  "fixed_parameters": {
+    "v_Delta": {
+      "source_value": 0.001,
+      "source_unit": "GeV",
+      "canonical_value": 0.001,
+      "canonical_unit": "GeV",
+      "operation": "linear",
+      "factor": 1.0,
+      "offset": 0.0
+    }
+  },
+  "acquisition": {
+    "source_type": "synthetic_fixture",
+    "paper_id": "arxiv:2605.00001v1",
+    "source_locator": "smoke-e2e synthetic target-001 curve",
+    "method": "synthetic_fixture",
+    "acquired_at": "2026-05-09T00:00:00Z"
+  },
+  "source_checksum": "sha256:b31efd0580ccb3a4931fe74b23e231cd6e79428110198bc0353c38f94f6ff33d",
+  "canonical_checksum": "sha256:b31efd0580ccb3a4931fe74b23e231cd6e79428110198bc0353c38f94f6ff33d"
+}

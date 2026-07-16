@@ -91,7 +91,7 @@ def m_eff_bb(*, m_lightest: float, **kwargs) -> float:
             {"canonical_name": "m_lightest", "value": 0.01}
         ],
         "observables": [
-            {"observable": "m_eff_bb", "source": {"type": "custom", "function": "m_eff_bb"}}
+            {"observable": "m_eff_bb", "source": {"type": "custom", "function": "m_eff_bb", "canonical_unit": "eV"}}
         ],
         "constraints_used": ["c-003"],
         "figures": [],
@@ -115,6 +115,39 @@ def m_eff_bb(*, m_lightest: float, **kwargs) -> float:
     )
     assert point["row"]["m_eff_bb"] == pytest.approx(0.01)
     assert point["row"]["c-003_verdict"] == "allowed"
+
+
+def test_unparseable_formula_fails_without_runtime_stub_side_effects(
+    tmp_path,
+    project_copy_factory,
+    ensure_task_result,
+    read_json,
+    write_json,
+    run_scan_module,
+) -> None:
+    project_dir = project_copy_factory(tmp_path)
+    ensure_task_result(project_dir)
+    custom_path = project_dir / "numerics" / "custom_observables.py"
+    custom_path.unlink()
+
+    scan_config_path = (
+        project_dir / "numerics" / "scan-configs" / "analysis-001.json"
+    )
+    scan_config = read_json(scan_config_path)
+    scan_config["constraints_used"] = ["c-003"]
+    write_json(scan_config_path, scan_config)
+
+    inputs = run_scan_module.load_inputs(
+        project_dir=project_dir,
+        analysis_id="analysis-001",
+    )
+    validation = run_scan_module.validate(inputs)
+    assert not validation["report"].has_errors
+
+    with pytest.raises(RuntimeError, match="c-003 could not be parsed safely"):
+        run_scan_module.prepare_runtime(inputs, validation["runtime"])
+
+    assert not custom_path.exists()
 
 
 def test_numerics_contract_parameter_combinations_prepare_without_manual_stubs(
@@ -157,4 +190,4 @@ def test_custom_observables_template_is_used_for_new_project_headers(
     text = path.read_text(encoding="utf-8")
     assert "Custom observables for demo-project." in text
     assert "Each function here must:" in text
-    assert 'task_outputs: dict[str, Callable[..., float]]' in text
+    assert 'task_outputs: Mapping[str, Callable[..., float]]' in text

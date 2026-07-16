@@ -61,3 +61,4 @@ def test_setup_only_skeleton_does_not_modify_existing_model(
         "reproduction/reports",
     ]:
         assert (project_dir / relative).is_dir()
+    assert not (project_dir / "paper").exists()

@@ -4,6 +4,7 @@ import pytest
 
 from tests.unit.compare_reference_fixtures import (
     ENUM_REASONS,
+    default_target,
     load_result,
     make_compare_project,
     run_compare,
@@ -17,7 +18,7 @@ from tests.unit.compare_reference_fixtures import (
         ("loop", 1, "literature_formula_imported", False, True, "literature_formula_imported"),
         ("loop", 1, "package_x_derived", True, True, "benchmark_used_as_input"),
         ("loop", 1, "manual_tree_algebra", False, True, "unsupported_manual_loop"),
-        ("loop", 1, "package_x_derived", False, False, "result_meta_missing"),
+        ("loop", 1, "package_x_derived", False, False, "formula_reference_only"),
         ("loop", 1, "blocked", False, True, "provenance_blocked"),
     ],
 )
@@ -38,6 +39,7 @@ def test_provenance_issue_reasons_are_schema_enum_tokens(
         provenance=provenance,
         benchmark_used_as_input=benchmark_used,
         include_result_meta=include_meta,
+        targets=None if include_meta else [default_target(kind="formula")],
     )
 
     result = run_compare(repo_root, project_dir, "run-001")

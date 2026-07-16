@@ -15,9 +15,25 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
-from _compare_metrics import SeriesComparison
+try:
+    from _compare_metrics import (
+        BoundaryComparison,
+        SeriesComparison,
+        _point_to_polyline_distances,
+        _points_close,
+        _polyline_segments,
+    )
+except ModuleNotFoundError:  # Imported as scripts._compare_figures.
+    from scripts._compare_metrics import (
+        BoundaryComparison,
+        SeriesComparison,
+        _point_to_polyline_distances,
+        _points_close,
+        _polyline_segments,
+    )
 
 
 def apply_style(project_dir: Path) -> None:
@@ -63,11 +79,20 @@ def render_all_figures(
     project_dir: Path,
     generated_files: dict[str, dict[str, str]],
     target: dict[str, Any],
-    comparison: SeriesComparison | None,
+    comparison: SeriesComparison | BoundaryComparison | None,
 ) -> None:
     overlay_paths = generated_files["overlay"]
     side_paths = generated_files["side_by_side"]
     residual_paths = generated_files["residual"]
+    if isinstance(comparison, BoundaryComparison):
+        render_boundary_figures(
+            project_dir=project_dir,
+            overlay_paths=overlay_paths,
+            side_paths=side_paths,
+            residual_paths=residual_paths,
+            comparison=comparison,
+        )
+        return
     x_label, y_label = _axis_labels(target, comparison)
 
     fig, ax = plt.subplots()
@@ -106,12 +131,121 @@ def render_all_figures(
     save_pdf_png(fig, project_dir / residual_paths["pdf"], project_dir / residual_paths["png"])
 
 
+def _plot_boundary_components(
+    ax: Any,
+    points,
+    labels,
+    *,
+    closed_components: dict[str, bool],
+    prefix: str,
+    linestyle: str,
+) -> None:
+    for label in sorted(set(labels.astype(str))):
+        component = points[labels.astype(str) == label]
+        if closed_components.get(label) and not _points_close(
+            component[0], component[-1]
+        ):
+            component = np.vstack([component, component[0]])
+        ax.plot(
+            component[:, 0],
+            component[:, 1],
+            marker="o",
+            linestyle=linestyle,
+            label=f"{prefix} component {label}",
+        )
+
+
+def render_boundary_figures(
+    *,
+    project_dir: Path,
+    overlay_paths: dict[str, str],
+    side_paths: dict[str, str],
+    residual_paths: dict[str, str],
+    comparison: BoundaryComparison,
+) -> None:
+    fig, ax = plt.subplots()
+    _plot_boundary_components(
+        ax,
+        comparison.reference_points,
+        comparison.reference_labels,
+        closed_components=comparison.reference_closed,
+        prefix="paper",
+        linestyle="-",
+    )
+    _plot_boundary_components(
+        ax,
+        comparison.predicted_points,
+        comparison.predicted_labels,
+        closed_components=comparison.predicted_closed,
+        prefix="this work",
+        linestyle="--",
+    )
+    ax.set_xlabel(comparison.x_label)
+    ax.set_ylabel(comparison.y_label)
+    ax.legend(loc="best")
+    save_pdf_png(fig, project_dir / overlay_paths["pdf"], project_dir / overlay_paths["png"])
+
+    fig, axes = plt.subplots(1, 2, figsize=(8, 3.2))
+    _plot_boundary_components(
+        axes[0],
+        comparison.reference_points,
+        comparison.reference_labels,
+        closed_components=comparison.reference_closed,
+        prefix="paper",
+        linestyle="-",
+    )
+    _plot_boundary_components(
+        axes[1],
+        comparison.predicted_points,
+        comparison.predicted_labels,
+        closed_components=comparison.predicted_closed,
+        prefix="this work",
+        linestyle="--",
+    )
+    axes[0].set_title("Paper")
+    axes[1].set_title("This work")
+    for axis in axes:
+        axis.set_xlabel(comparison.x_label)
+        axis.set_ylabel(comparison.y_label)
+    save_pdf_png(fig, project_dir / side_paths["pdf"], project_dir / side_paths["png"])
+
+    nearest = _boundary_reference_residuals(comparison)
+    fig, ax = plt.subplots()
+    ax.plot(np.arange(nearest.size), nearest, marker="o")
+    ax.set_xlabel("reference boundary point index")
+    ax.set_ylabel("nearest normalized predicted-boundary distance")
+    save_pdf_png(fig, project_dir / residual_paths["pdf"], project_dir / residual_paths["png"])
+
+
+def _boundary_reference_residuals(comparison: BoundaryComparison) -> np.ndarray:
+    """Return reference-vertex residuals using the verdict's polyline geometry."""
+
+    normalized_reference = comparison.reference_points / comparison.scale_values
+    normalized_predicted = comparison.predicted_points / comparison.scale_values
+    rendered_labels = comparison.predicted_labels.astype(str)
+    target_segments = [
+        segment
+        for component_id in sorted(set(rendered_labels))
+        for segment in _polyline_segments(
+            normalized_predicted[rendered_labels == component_id],
+            comparison.predicted_closed[component_id],
+        )
+    ]
+    if not target_segments:
+        raise ValueError("boundary residuals require predicted polyline segments")
+    return _point_to_polyline_distances(
+        normalized_reference,
+        target_segments,
+    )
+
+
 def render_blocked_overlay(
     *,
     project_dir: Path,
     generated_files: dict[str, dict[str, str]],
     target: dict[str, Any],
     digitized_df: pd.DataFrame | None,
+    reason: str,
 ) -> None:
     overlay_paths = generated_files["overlay"]
     x_col = str(target.get("x_param", "x"))
@@ -131,7 +265,7 @@ def render_blocked_overlay(
     ax.text(
         0.5,
         0.5,
-        "Reproduction blocked: missing scan_config_hints",
+        f"Reproduction blocked: {reason}",
         transform=ax.transAxes,
         ha="center",
         va="center",

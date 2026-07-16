@@ -23,6 +23,11 @@ Any `skipped` constraint means the point is not proven allowed by the used
 constraint set.
 `skipped` is never positive evidence.
 
+In Phase 0, a skipped evaluation is also a run-level publication blocker. The
+evaluator retains a typed skip result for diagnostics, but `run_scan.py` must
+exit nonzero before writing or refreshing scan outputs, summaries, or manifest
+history if any configured constraint or point is skipped.
+
 Runtime summaries may also report coarse point status for operational purposes.
 Do not replace the strict allowed-region rule with a looser summary count when
 describing physics reach or drawing the allowed-region overlay.
@@ -50,8 +55,10 @@ Every used constraint emits the same four logical values.
 | `chi2` | number or null | Chi-squared contribution for measurement constraints. |
 | `skip_reason` | string or null | Machine-readable reason when verdict is `skipped`. |
 
-These values are stored in `scan.csv` as `{id}_verdict`, `{id}_margin`,
-`{id}_chi2`, and `{id}_skip_reason`.
+For a successful completed run these values are stored in `scan.csv` as
+`{id}_verdict`, `{id}_margin`, `{id}_chi2`, and `{id}_skip_reason`.
+`skipped` tuples exist only as internal failure diagnostics because their
+presence blocks publication of the result pair.
 
 When `verdict == "skipped"`:
 
@@ -67,7 +74,8 @@ When `verdict != "skipped"`:
 
 ## Missing Predictions
 
-If the prediction is unavailable, the evaluator returns:
+If the prediction is unavailable, the evaluator returns the following
+diagnostic and the full scan fails closed:
 
 ```json
 {
@@ -80,6 +88,10 @@ If the prediction is unavailable, the evaluator returns:
 
 This covers external-only observables, missing derived values, and observable
 functions that failed before producing a scalar.
+
+The same rule applies when a prediction, interpolated limit, margin, or chi2 is
+boolean, non-scalar, `NaN`, or positive/negative infinity. Such values are
+invalid evidence, not missing values that can be silently serialized.
 
 ## Direct Constraint Kinds
 
@@ -188,12 +200,18 @@ the direct formula for its constraint kind.
 
 Required semantics:
 
-1. Load the interpolation table named by the constraint metadata.
-2. Read the configured x parameter from the current point.
-3. Reject evaluation if the x value is outside `valid_range`.
-4. Interpolate the limit using the declared method.
-5. Insert the interpolated limit into the working constraint.
-6. Evaluate the direct formula.
+1. Resolve the declared project-contained table path.
+2. Read the exact configured `x_column` and `y_column` from a real header.
+3. Require at least two finite rows with unique, strictly increasing x nodes;
+   never sort, deduplicate, or use positional/headerless fallbacks.
+4. Verify `x_parameter` and `x_unit` against `model-spec.json`, and verify
+   `y_quantity`/`y_unit` against the constraint observable/unit and every
+   applicable model-parameter, custom-binding, or task-return unit.
+5. For forbidden extrapolation, require node support to cover all of
+   `valid_range`, then reject any point outside that range/support.
+6. Interpolate the limit using only the declared supported method.
+7. Insert the interpolated limit into the working constraint and evaluate the
+   direct formula.
 
 Out-of-range behavior:
 
@@ -213,8 +231,10 @@ Evaluation-failure behavior:
 - missing x parameter: skipped with the missing-parameter error
 - failed numeric conversion: skipped with the conversion error
 
-Do not extrapolate unless the runtime and constraint metadata explicitly support
-that policy.
+Only `forbidden` and explicit `nearest` policies are supported. `nearest`
+clamps to the declared range and node support; `forbidden` never extrapolates.
+Every skipped interpolation result blocks publication of the entire configured
+scan; the runner does not publish the in-range subset.
 
 ## Manual-Only Constraints
 
@@ -234,6 +254,10 @@ They always evaluate as:
 
 Manual-only constraints must not contribute exclusion shading or allowed-region
 evidence.
+If a manual-only constraint is included in `constraints_used[]`, its skipped
+result therefore blocks automated scan publication. Remove it from the
+automated constraint set or implement a supported numeric evaluator; do not
+relax the fail-closed rule.
 
 ## Parameter-Combination Constraints
 
@@ -244,7 +268,8 @@ If safe evaluation succeeds, the resulting scalar becomes `pred`.
 If safe evaluation fails, the runner may use a custom hook with the same
 observable name.
 If neither route is available, the point records a skipped constraint with the
-failure message, and setup may create a manual stub for the project.
+failure message in memory, and setup may create a manual stub for the project.
+The scan command exits nonzero without publishing outputs.
 
 The formula must not require LaTeX names, display labels, file I/O, or mutable
 global state.
@@ -252,12 +277,14 @@ global state.
 ## Derived And External Constraints
 
 Derived constraints consume an observable produced elsewhere in the scan.
-If the derived observable is unavailable, the constraint is skipped.
+If the derived observable is unavailable, the constraint is skipped and the
+scan fails closed.
 
 External constraints represent information not evaluated by the current numeric
 pipeline.
 Unless a concrete prediction source is present, they are skipped rather than
-converted into arbitrary numbers.
+converted into arbitrary numbers, and an automated scan that selects them is
+not publishable.
 
 ## Worked Sign Checks
 
@@ -277,3 +304,5 @@ converted into arbitrary numbers.
 - [ ] Is `chi2` present only for measurement-style semantics.
 - [ ] Does every skipped verdict have a concrete `skip_reason`.
 - [ ] Are skipped constraints excluded from allowed-region evidence.
+- [ ] Did any skipped/non-finite/invalid result cause a nonzero scan exit before
+      output or manifest mutation rather than a partial successful scan.

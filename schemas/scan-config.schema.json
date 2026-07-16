@@ -11,12 +11,14 @@
     "fixed_parameters",
     "observables",
     "constraints_used",
-    "figures"
+    "figures",
+    "seed",
+    "parallelism"
   ],
   "properties": {
     "analysis_id": {
       "type": "string",
-      "pattern": "^analysis-\\d{3}$"
+      "pattern": "^analysis-[0-9]{3}$"
     },
     "model_name": {
       "type": "string"
@@ -35,17 +37,18 @@
       "properties": {
         "model_version": {
           "type": "string",
-          "pattern": "^v\\d+$"
+          "pattern": "^v[0-9]+$"
         },
         "model_checksum": {
           "type": "string",
-          "pattern": "^sha256:.+"
+          "pattern": "^sha256:[0-9a-f]{64}$"
         },
         "task_ids": {
           "type": "array",
+          "uniqueItems": true,
           "items": {
             "type": "string",
-            "pattern": "^task-\\d{3}$"
+            "pattern": "^task-[0-9]{3}$"
           }
         }
       }
@@ -54,32 +57,37 @@
       "type": "array",
       "minItems": 1,
       "maxItems": 4,
+      "uniqueItems": true,
       "items": {
         "$ref": "#/$defs/scan_param"
       }
     },
     "fixed_parameters": {
       "type": "array",
+      "uniqueItems": true,
       "items": {
         "$ref": "#/$defs/fixed_param"
       }
     },
     "observables": {
       "type": "array",
-      "minItems": 1,
+      "uniqueItems": true,
       "items": {
         "$ref": "#/$defs/observable_binding"
       }
     },
     "constraints_used": {
       "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
       "items": {
         "type": "string",
-        "pattern": "^c-\\d{3}$"
+        "pattern": "^c-[0-9]{3}$"
       }
     },
     "figures": {
       "type": "array",
+      "uniqueItems": true,
       "items": {
         "$ref": "#/$defs/figure_spec"
       }
@@ -91,15 +99,31 @@
     },
     "seed": {
       "type": "integer",
-      "default": 0
+      "minimum": 0,
+      "default": 0,
+      "description": "Root seed for the explicit pcg64-v1 local RNG/substream contract."
     },
     "parallelism": {
       "type": "integer",
       "minimum": 1,
-      "default": 1
+      "default": 1,
+      "description": "Execution hint that must not change scientific results."
     }
   },
   "$defs": {
+    "canonical_name": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+      "not": {
+        "enum": [
+          "False", "None", "True", "and", "as", "assert", "async", "await",
+          "break", "class", "continue", "def", "del", "elif", "else", "except",
+          "finally", "for", "from", "global", "if", "import", "in", "is",
+          "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try",
+          "while", "with", "yield"
+        ]
+      }
+    },
     "scan_param": {
       "type": "object",
       "additionalProperties": false,
@@ -111,8 +135,7 @@
       ],
       "properties": {
         "canonical_name": {
-          "type": "string",
-          "pattern": "^[A-Za-z0-9_]+$"
+          "$ref": "#/$defs/canonical_name"
         },
         "range": {
           "type": "array",
@@ -143,8 +166,7 @@
       ],
       "properties": {
         "canonical_name": {
-          "type": "string",
-          "pattern": "^[A-Za-z0-9_]+$"
+          "$ref": "#/$defs/canonical_name"
         },
         "value": {
           "type": "number"
@@ -160,7 +182,7 @@
       ],
       "properties": {
         "observable": {
-          "type": "string"
+          "$ref": "#/$defs/canonical_name"
         },
         "source": {
           "oneOf": [
@@ -177,7 +199,7 @@
                 },
                 "task_id": {
                   "type": "string",
-                  "pattern": "^task-\\d{3}$"
+                  "pattern": "^task-[0-9]{3}$"
                 }
               }
             },
@@ -186,15 +208,29 @@
               "additionalProperties": false,
               "required": [
                 "type",
-                "function"
+                "function",
+                "canonical_unit"
               ],
               "properties": {
                 "type": {
                   "const": "custom"
                 },
                 "function": {
+                  "$ref": "#/$defs/canonical_name"
+                },
+                "canonical_unit": {
                   "type": "string",
-                  "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+                  "pattern": "\\S"
+                },
+                "task_ids": {
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^task-[0-9]{3}$"
+                  },
+                  "description": "Exact calculation backends exposed through the immutable task_outputs context."
                 },
                 "note": {
                   "type": "string"
@@ -221,15 +257,17 @@
               "const": "exclusion_2d"
             },
             "x": {
-              "type": "string"
+              "$ref": "#/$defs/canonical_name"
             },
             "y": {
-              "type": "string"
+              "$ref": "#/$defs/canonical_name"
             },
             "constraints": {
               "type": "array",
+              "uniqueItems": true,
               "items": {
-                "type": "string"
+                "type": "string",
+                "pattern": "^c-[0-9]{3}$"
               }
             },
             "show_allowed_region": {
@@ -238,6 +276,15 @@
             },
             "title": {
               "type": "string"
+            },
+            "fixed": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/canonical_name"
+              },
+              "additionalProperties": {
+                "type": "number"
+              }
             }
           }
         },
@@ -254,12 +301,13 @@
               "const": "scan_1d"
             },
             "x": {
-              "type": "string"
+              "$ref": "#/$defs/canonical_name"
             },
             "observables": {
               "type": "array",
+              "uniqueItems": true,
               "items": {
-                "type": "string"
+                "$ref": "#/$defs/canonical_name"
               },
               "minItems": 1
             },
@@ -269,6 +317,15 @@
             },
             "title": {
               "type": "string"
+            },
+            "fixed": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/canonical_name"
+              },
+              "additionalProperties": {
+                "type": "number"
+              }
             }
           }
         }

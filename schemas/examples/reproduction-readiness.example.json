@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "analysis_id": "analysis-001",
+  "workflow_state": "routable",
+  "summary": {
+    "total": 2,
+    "ready": 1,
+    "blocked": 1,
+    "not_ready": 0
+  },
+  "targets": [
+    {
+      "target_id": "eq-1",
+      "kind": "formula",
+      "disposition": "ready",
+      "requirements": {
+        "literature": {
+          "required": true,
+          "status": "ready",
+          "issues": []
+        },
+        "model": {
+          "required": false,
+          "status": "not_applicable",
+          "issues": []
+        },
+        "calculations": {
+          "required": false,
+          "status": "not_applicable",
+          "issues": [],
+          "task_ids": []
+        },
+        "numerics": {
+          "required": false,
+          "status": "not_applicable",
+          "issues": []
+        }
+      }
+    },
+    {
+      "target_id": "fig-3a",
+      "kind": "figure_curve",
+      "disposition": "blocked",
+      "requirements": {
+        "literature": {
+          "required": true,
+          "status": "ready",
+          "issues": []
+        },
+        "model": {
+          "required": true,
+          "status": "ready",
+          "issues": []
+        },
+        "calculations": {
+          "required": true,
+          "status": "ready",
+          "issues": [],
+          "task_ids": [
+            "task-001"
+          ]
+        },
+        "numerics": {
+          "required": true,
+          "status": "blocked",
+          "issues": [
+            {
+              "code": "scan_hint_incomplete",
+              "detail": "paper-extract scan hint is incomplete",
+              "path": "literature/paper-extract.json",
+              "fields": [
+                "fixed_parameters.v_Delta"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

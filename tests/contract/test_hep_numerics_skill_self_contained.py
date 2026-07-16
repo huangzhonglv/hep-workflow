@@ -50,8 +50,6 @@ def repo_wide_design_doc_reference_files(repo_root: Path) -> list[Path]:
             continue
         if path.resolve() == current_test:
             continue
-        if relative_path.match("codex-prompts-*.md"):
-            continue
         files.append(path)
     return sorted(files)
 

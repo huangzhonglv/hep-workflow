@@ -66,10 +66,14 @@ def test_all_skill_trees_match_between_claude_and_agents(repo_root: Path) -> Non
     agents_root = repo_root / ".agents" / "skills"
 
     claude_skills = sorted(
-        path.name for path in claude_root.iterdir() if path.is_dir()
+        path.name
+        for path in claude_root.iterdir()
+        if path.is_dir() and path.name not in IGNORED_PARTS
     )
     agents_skills = sorted(
-        path.name for path in agents_root.iterdir() if path.is_dir()
+        path.name
+        for path in agents_root.iterdir()
+        if path.is_dir() and path.name not in IGNORED_PARTS
     )
 
     assert claude_skills == agents_skills

@@ -18,6 +18,15 @@ This file defines the rendering contract for `numerics/figures/{analysis_id}/`.
 
 New kinds require schema, renderer, tests, and this reference to change together.
 
+## Exact Slice Rule
+
+Figures are views of one exact scan slice, never implicit projections. For each
+figure, `figures[].fixed` must name exactly every scan parameter not used as a
+visible axis and no other key. Values are matched by exact numeric equality.
+The renderer rejects an empty slice, a non-finite hidden-axis column, or
+duplicate selected coordinates. Nearest/`isclose` matching, median or first-row
+aggregation, and duplicate dropping are forbidden.
+
 ## Global Style Defaults
 
 | Setting | Default |
@@ -43,8 +52,9 @@ Axis labels resolve in this order:
 4. for observables, use the observable column name plus any unit inferred from a
    matching constraint
 
-Filenames never use LaTeX labels.
-Use canonical names or observable names sanitized for the filesystem.
+Filenames never use LaTeX labels. Use only already-valid canonical parameter or
+observable names; do not silently sanitize or transform machine identifiers.
+All output basenames must be preflighted as unique before any figure is written.
 
 ## Matplotlib LaTeX Fallback
 
@@ -60,6 +70,7 @@ The renderer probes for a usable system LaTeX stack.
 Inputs:
 
 - `x` and `y` must be scanned parameter columns.
+- `fixed` must exactly declare every other scanned parameter.
 - The CSV must contain `{constraint}_verdict` columns for every listed
   constraint.
 - The selected rows must form a rectangular grid in `(x, y)`.
@@ -85,12 +96,13 @@ exclusion-{x}-{y}.png
 
 Inputs: `x` must be a scanned parameter column.
 - Every requested observable must exist as a CSV column.
+- `fixed` must exactly declare every other scanned parameter.
 
 Visual semantics:
 
 - Plot observable values against the x parameter.
-- If repeated x values exist, aggregate consistently before drawing summary
-  curves.
+- Repeated x values on the exact slice are an error. Do not aggregate or select
+  one of them before drawing.
 - When `overlay_constraint_bands` is true, draw matching measurement bands,
   allowed bands, or limit lines for constraints on the same observable.
 - Use log axis scaling when the scan-config declares the x parameter log-scale.
@@ -98,22 +110,41 @@ Visual semantics:
 Filename pattern:
 
 ```text
-scan-{x}-{observable}.pdf
-scan-{x}-{observable}.png
+scan1d-{x}-{observable}.pdf
+scan1d-{x}-{observable}.png
 ```
+
+`scan1d-` is the sole canonical prefix for `scan_1d` output. Producers,
+manifests, validators, summaries, and consumers must derive the basename from
+the shared `figure_output_key()` helper. Do not emit or recognize a parallel
+legacy `scan-{x}-{observable}` artifact as current evidence; dual outputs can
+diverge and are not an allowed compatibility mechanism.
 
 ## Error Tolerance
 
 - Missing scan result files are hard failures, and missing columns fail the affected figure.
+- Missing/extra hidden-axis declarations, empty exact slices, non-finite hidden
+  slice data, and duplicate selected coordinates fail the affected figure.
 - One failed figure must not corrupt scan data.
-- Replot-only workflows may overwrite stale figures but must not run the scan.
+- Replot-only workflows may overwrite figures only when the live config's
+  execution projection matches the immutable scan snapshot. Title/prose or
+  `parallelism`-hint drift is allowed; axes, slices, overlays, constraints,
+  observables, seed, and other scientific semantics require a new scan. Every
+  generation owns `figures.meta.json`, hashes each output, and binds the full
+  live rendering request plus renderer dependencies. Replot must not run the
+  scan or rewrite its pair.
 - Never substitute a different axis, observable, or constraint to make a plot.
 
 ## Reviewer Checklist
 
 - [ ] Figure kind is `exclusion_2d` or `scan_1d`.
 - [ ] Axes and observables exist in `scan.csv`.
+- [ ] `fixed` declares exactly every hidden scan axis and selects one nonempty
+      exact slice.
+- [ ] Selected 1D x or 2D `(x, y)` coordinates are unique; no aggregation was
+      used to manufacture uniqueness.
 - [ ] Labels use LaTeX/display text only for humans.
-- [ ] Filenames use canonical or sanitized machine names.
+- [ ] Filenames use unchanged canonical machine names and all PDF/PNG basenames
+      are collision-free before rendering begins.
 - [ ] Exclusion overlays use strict all-allowed semantics.
 - [ ] PDF and PNG outputs exist or a failure reason is recorded.

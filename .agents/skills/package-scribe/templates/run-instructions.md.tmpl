@@ -6,7 +6,7 @@
 - Result directory: `{{RESULT_DIR}}`
 - Runnable code: `{{RESULT_WL_PATH}}`
 
-## Command
+## POSIX Shell Command
 
 ```bash
 {{RUN_COMMAND}}
@@ -18,6 +18,14 @@
 
 ## Notes
 
+- The command block is rendered specifically for POSIX `sh` / `bash` / `zsh`.
+  It is not a PowerShell or `cmd.exe` command.
+- Programmatic execution must pass the three argv elements — the exact
+  `wolframscript` executable path, `-file`, and the exact `result.wl` path —
+  directly to the process API with no shell. The displayed string is only for
+  POSIX copy/paste use.
 - If you run inside the Codex sandbox on this machine, `wolframscript` may report a misleading license error.
 - Prefer running the command outside the sandbox for real verification.
-- If your Wolfram installation lives elsewhere, replace `/Applications/Wolfram.app/Contents/MacOS/wolframscript` with your local path.
+- If Wolfram is not on `PATH`, set `WOLFRAMSCRIPT_BIN` to the exact executable
+  path before initializing these files. Do not include flags or shell syntax in
+  that variable.

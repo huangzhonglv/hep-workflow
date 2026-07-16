@@ -165,5 +165,5 @@
   "paper_local_to_canonical": {
     "Toy BR upper limit": "c-001"
   },
-  "notes": "Synthetic smoke-e2e extraction for PR-2 reproduction tests."
+  "notes": "Synthetic smoke-e2e extraction for reproduction workflow tests."
 }

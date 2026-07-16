@@ -13,7 +13,7 @@
     },
     "model_version": {
       "type": "string",
-      "pattern": "^v\\d+$"
+      "pattern": "^v[0-9]+$"
     },
     "tasks": {
       "type": "array",
@@ -25,7 +25,16 @@
   "$defs": {
     "canonical_name": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9_]+$"
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+      "not": {
+        "enum": [
+          "False", "None", "True", "and", "as", "assert", "async", "await",
+          "break", "class", "continue", "def", "del", "elif", "else", "except",
+          "finally", "for", "from", "global", "if", "import", "in", "is",
+          "lambda", "nonlocal", "not", "or", "pass", "raise", "return", "try",
+          "while", "with", "yield"
+        ]
+      }
     },
     "particle_ref": {
       "type": "object",
@@ -36,7 +45,7 @@
       ],
       "properties": {
         "propagator": {
-          "type": "string"
+          "$ref": "#/$defs/canonical_name"
         },
         "mass": {
           "anyOf": [
@@ -51,8 +60,7 @@
       }
     },
     "momentum_label": {
-      "type": "string",
-      "pattern": "^[A-Za-z0-9_]+$"
+      "$ref": "#/$defs/canonical_name"
     },
     "external_leg": {
       "type": "object",
@@ -124,7 +132,7 @@
       "properties": {
         "task_id": {
           "type": "string",
-          "pattern": "^task-\\d{3}$"
+          "pattern": "^task-[0-9]{3}$"
         },
         "title": {
           "type": "string"
@@ -163,7 +171,7 @@
           }
         },
         "target_quantity": {
-          "type": "string"
+          "$ref": "#/$defs/canonical_name"
         },
         "on_shell": {
           "type": "boolean"

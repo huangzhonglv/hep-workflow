@@ -75,7 +75,7 @@ def test_branch_ii_rerun_smoke_e2e(
         f"{manifest['history'][-1].get('action')!r}"
     )
     analyses = manifest["artifacts"]["numerics"]["analyses"]
-    assert analyses == [analysis_id], (
+    assert [analysis["analysis_id"] for analysis in analyses] == [analysis_id], (
         "manifest analyses should be deduped to "
         f"[{analysis_id!r}], got {analyses}"
     )

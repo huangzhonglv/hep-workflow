@@ -17,9 +17,9 @@ PROJECT_SUBDIRECTORIES = (
     "calculations",
     "constraints",
     "numerics",
+    "numerics/scan-configs",
     "numerics/scan-results",
     "numerics/figures",
-    "paper",
 )
 
 

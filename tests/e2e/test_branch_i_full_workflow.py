@@ -33,6 +33,7 @@ def test_branch_i_full_workflow_smoke_e2e(
             project_dir,
             "--analysis-id",
             "analysis-002",
+            "--allow-formula-fallback",
         ]
     )
     init_config_path = (
@@ -40,6 +41,9 @@ def test_branch_i_full_workflow_smoke_e2e(
     )
     assert init_config_path.exists(), (
         f"init_analysis did not create draft config: {init_config_path}"
+    )
+    assert read_json(init_config_path)["allow_formula_fallback"] is True, (
+        "the e2e fixture uses a manual-tree backend and must opt in explicitly"
     )
 
     run_cli(
@@ -120,7 +124,9 @@ def test_branch_i_full_workflow_smoke_e2e(
         "manifest numerics status after run_scan is unexpected: "
         f"{numerics['status']!r}"
     )
-    assert analysis_id in numerics["analyses"], (
+    assert analysis_id in {
+        analysis["analysis_id"] for analysis in numerics["analyses"]
+    }, (
         "manifest numerics analyses missing "
         f"{analysis_id}: {numerics['analyses']}"
     )

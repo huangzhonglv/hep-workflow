@@ -3,29 +3,34 @@
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
+try:
+    from _strict_json import StrictJSONError, load_json
+except ModuleNotFoundError:  # Imported as scripts.validate_examples in tests/tools.
+    from scripts._strict_json import StrictJSONError, load_json
+
 
 SCHEMA_TO_EXAMPLE = {
+    "dependency-graph.schema.json": "dependency-graph.example.json",
     "manifest.schema.json": "manifest.example.json",
     "model-spec.schema.json": "model-spec.example.json",
     "calc-tasks.schema.json": "calc-tasks.example.json",
     "benchmarks.schema.json": "benchmarks.example.json",
     "result-meta.schema.json": "result-meta.example.json",
     "paper-meta.schema.json": "paper-meta.example.json",
+    "paper-extract.schema.json": "paper-extract.example.json",
     "repro-targets.schema.json": "repro-targets.example.json",
+    "formula-reference.schema.json": "formula-reference.example.json",
+    "normalization-record.schema.json": "normalization-record.example.json",
     "reproduction-result.schema.json": "reproduction-result.example.json",
+    "reproduction-readiness.schema.json": "reproduction-readiness.example.json",
     "constraints-data.schema.json": "constraints-data.example.json",
     "scan-config.schema.json": "scan-config.example.json",
     "scan-meta.schema.json": "scan-meta.example.json",
+    "figure-meta.schema.json": "figure-meta.example.json",
 }
-
-
-def load_json(path: Path) -> dict:
-    return json.loads(path.read_text(encoding="utf-8"))
-
 
 def main() -> int:
     try:
@@ -49,8 +54,14 @@ def main() -> int:
     for schema_name, example_name in SCHEMA_TO_EXAMPLE.items():
         schema_path = schemas_dir / schema_name
         example_path = examples_dir / example_name
-        schema = load_json(schema_path)
-        example = load_json(example_path)
+        try:
+            schema = load_json(schema_path)
+            example = load_json(example_path)
+        except (OSError, StrictJSONError) as exc:
+            failures += 1
+            print(f"FAIL {schema_name} <- {example_name}")
+            print(f"  - {exc}")
+            continue
         validator = Draft202012Validator(schema)
         errors = sorted(validator.iter_errors(example), key=lambda err: list(err.absolute_path))
 

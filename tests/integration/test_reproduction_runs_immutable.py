@@ -21,7 +21,7 @@ def test_reproduction_runs_are_immutable(
     repo_root: Path,
 ) -> None:
     project_dir = _smoke_project(tmp_path, project_copy_factory, smoke_e2e_fixture_path)
-    _write_synthetic_scan(project_dir)
+    _write_synthetic_scan(project_dir, repo_root)
 
     first = _run_compare(repo_root, project_dir, "run-001")
     assert first.returncode == 0, first.stdout + first.stderr
