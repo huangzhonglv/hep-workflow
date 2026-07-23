@@ -38,7 +38,7 @@ Use Python 3.11 or newer. A virtual environment is recommended; mixed system
 scientific Python environments can fail for reasons unrelated to this project.
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/huangzhonglv/hep-workflow.git
 cd hep-workflow
 python3 -m venv .venv
 source .venv/bin/activate
